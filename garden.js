@@ -3,6 +3,7 @@
 (() => {
   const $ = (s) => document.querySelector(s);
   const G = window.GARDEN;
+  if (!G) { window.__showErr && window.__showErr("data.js did not load (window.GARDEN is missing)"); return; }
   const TOTAL = G.total;
   const SLOT = 300; // 相邻两天在世界里的间距
   const START = 440; // 第 1 天的 x
@@ -322,6 +323,10 @@
   /* ---------- 主循环 ---------- */
   let last = performance.now(), viewTick = 0;
   function frame(t) {
+    try { render(t); } catch (err) { window.__showErr && window.__showErr("Draw error: " + err.message); console.error(err); }
+    requestAnimationFrame(frame);
+  }
+  function render(t) {
     const dt = clamp(t - last, 1, 50); last = t;
     const pwx = update(dt, t);
 
@@ -344,7 +349,6 @@
     tipEl.style.transform = `translate(${mx + 18}px,${my + 20}px)`;
 
     if (++viewTick % 8 === 0) updateTicks();
-    requestAnimationFrame(frame);
   }
 
   function drawMotes(t, dt) {

@@ -4,10 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>100 Days Garden</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261007a">
 </head>
 <body>
 <canvas id="scene"></canvas>
+<script data-cfasync="false">
+  // If anything fails, say so on the page instead of staying blank.
+  (function () {
+    function show(m) {
+      var d = document.getElementById("err");
+      if (!d) { d = document.createElement("pre"); d.id = "err"; d.style.cssText = "position:fixed;left:12px;bottom:56px;max-width:90vw;margin:0;padding:8px 10px;font:12px/1.4 monospace;color:#900;background:rgba(255,255,255,.85);border-radius:8px;white-space:pre-wrap;z-index:99"; document.body.appendChild(d); }
+      d.textContent += m + "\n";
+    }
+    window.__showErr = show;
+    window.addEventListener("error", function (e) {
+      show(e.target && e.target.src ? "Failed to load: " + e.target.src : "Error: " + e.message + (e.filename ? " (" + e.filename.split("/").pop() + ":" + e.lineno + ")" : ""));
+    }, true);
+  })();
+</script>
 <div class="grain"></div>
 <div class="vignette"></div>
 
@@ -46,7 +60,8 @@
   </article>
 </div>
 
-<script src="data.js"></script>
-<script src="garden.js"></script>
+<script data-cfasync="false" src="data.js?v=20261007a"></script>
+<script data-cfasync="false" src="garden.js?v=20261007a"></script>
+<noscript>Please enable JavaScript to enter the garden.</noscript>
 </body>
 </html>
