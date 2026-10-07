@@ -396,7 +396,19 @@
     mx = e.clientX; my = e.clientY;
     moved += Math.abs(dx) + Math.abs(dy);
     if (moved > 60) introEl.classList.add("gone");
+    armIdle();
   }
+  // 鼠标长时间不动，提示语重新浮现
+  const IDLE_MS = 8000;
+  let idleTimer = 0;
+  function armIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      if (modalOpen) return armIdle();
+      moved = 0; introEl.classList.remove("gone");
+    }, IDLE_MS);
+  }
+  armIdle();
   addEventListener("pointermove", point);
   addEventListener("pointerdown", point);
   cvs.addEventListener("click", (e) => {
@@ -405,7 +417,7 @@
   });
   addEventListener("wheel", (e) => {
     if (modalOpen) return;
-    camTarget = null; camX = clamp(camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.9, 0, WORLD - W);
+    armIdle(); camTarget = null; camX = clamp(camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.9, 0, WORLD - W);
   }, { passive: true });
 
   /* ---------- 弹窗 ---------- */
@@ -423,12 +435,12 @@
     $("#m-caption").textContent = e.caption || "";
     const idx = filled.indexOf(day);
     $("#m-prev").disabled = idx <= 0; $("#m-next").disabled = idx >= filled.length - 1;
-    modalOpen = true; hovered = null; updateTip();
+    modalOpen = true; hovered = null; updateTip(); introEl.classList.add("gone");
     cursorEl.style.opacity = 0; tipEl.classList.remove("show");
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false");
   }
   function closeModal() {
-    modalOpen = false; modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true");
+    armIdle(); modalOpen = false; modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true");
     cursorEl.style.opacity = "";
   }
   function step(d) { const i = filled.indexOf(cur) + d; if (filled[i]) openDay(filled[i]); }
