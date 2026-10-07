@@ -377,7 +377,6 @@
     tipEl.classList.add("show");
   }
 
-  $("#count").textContent = `${G.entries.length} / ${TOTAL} in bloom`;
   const ticksEl = $("#ticks");
   const tickBtns = flowers.map((f) => {
     const b = document.createElement("button");

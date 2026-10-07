@@ -14,7 +14,6 @@ html,body{margin:0;height:100%;overflow:hidden;background:#e6e6e3;color:var(--in
 
 .hud-title{position:fixed;left:28px;top:22px;pointer-events:none}
 .hud-title h1{margin:0;font-weight:400;font-size:18px;letter-spacing:.2em;color:var(--ink)}
-.hud-title p{margin:6px 0 0;font-size:12px;letter-spacing:.2em;color:var(--ink-soft)}
 
 .intro{position:fixed;left:50%;top:18%;transform:translateX(-50%);text-align:center;pointer-events:none;
   transition:opacity 1.6s ease;color:var(--ink)}

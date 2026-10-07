@@ -3,7 +3,7 @@
 // photo  : the real photo
 // caption: one sentence about the picture
 window.GARDEN = {
-  title: "100 Days Garden",
+  title: "Keyi's Garden",
   total: 100,
   entries: [
     {
