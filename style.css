@@ -60,9 +60,7 @@ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;backgrou
 .pair .sketch{flex:1.1 1 0}
 .pair .sketch img{background:radial-gradient(circle,#fff 30%,#ecece8 100%);border-radius:18px}
 .pair img{width:100%;height:min(52vh,460px);object-fit:contain;display:block}
-.pair .photo img{object-fit:cover;border-radius:18px;filter:grayscale(1) contrast(.95);box-shadow:0 12px 30px rgba(20,20,20,.18)}
-.modal.open .photo img{animation:colorize 1.8s .6s ease forwards}
-@keyframes colorize{to{filter:grayscale(0) contrast(1)}}
+.pair .photo img{object-fit:cover;border-radius:18px;box-shadow:0 12px 30px rgba(20,20,20,.18)}
 .pair figcaption{margin-top:10px;font-size:11px;letter-spacing:.4em;color:var(--ink-soft)}
 .meta{text-align:center;margin-top:18px;padding:0 12px}
 .meta .day{font-size:12px;letter-spacing:.4em;color:var(--ink-soft)}

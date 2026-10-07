@@ -449,7 +449,6 @@
     cur = day;
     const sk = $("#m-sketch"), ph = $("#m-photo");
     sk.src = e.sketch; ph.src = e.photo;
-    ph.style.animation = "none"; void ph.offsetWidth; ph.style.animation = "";
     $("#m-day").textContent = `Day ${pad(day)}`;
     $("#m-title").textContent = e.title || "";
     $("#m-title").hidden = !e.title;
