@@ -75,7 +75,7 @@
   }
 
   /* ---------- 状态 ---------- */
-  let mx = innerWidth * 0.3, my = innerHeight * 0.8, moved = 0;
+  let mx = innerWidth * 0.3, my = innerHeight * 0.8, moved = 0, lastMove = 0;
   let px = mx, py = my, vx = 0, dir = 1, stepT = 0;
   let camX = 0, camTarget = null, wind = 0.6;
   let hovered = null, modalOpen = false;
@@ -303,6 +303,13 @@
         prints.push({ x: px + camX, y: py + (prints.length % 2 ? 3 : -3), t, s: U * (0.68 + 0.5 * clamp((py - H * 0.6) / (H * 0.3), 0, 1)) });
         if (prints.length > 40) prints.shift();
       }
+      // 鼠标靠近左右边缘 -> 画面平移；鼠标一停就不再滑动
+      if (camTarget === null) {
+        const moving = clamp(1 - (t - lastMove) / 220, 0, 1);
+        const ex = mx / W; let v = 0;
+        if (ex > 0.74) v = (ex - 0.74) / 0.26; else if (ex < 0.26) v = -(0.26 - ex) / 0.26;
+        camX += v * Math.abs(v) * 0.6 * dt * moving;
+      }
     } else vx *= 0.9;
     if (camTarget !== null) {
       camX += (camTarget - camX) * (1 - Math.exp(-dt / 260));
@@ -397,7 +404,7 @@
   function point(e) {
     if (modalOpen) return;
     const dx = e.clientX - mx, dy = e.clientY - my;
-    mx = e.clientX; my = e.clientY;
+    mx = e.clientX; my = e.clientY; lastMove = performance.now();
     moved += Math.abs(dx) + Math.abs(dy);
     if (moved > 60) introEl.classList.add("gone");
     armIdle();
