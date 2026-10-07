@@ -14,6 +14,6 @@ Open `index.html` directly (plain static site, no build step).
 ```
 
 ## Controls
-- Move the mouse: the visitor follows; near the left/right edge the garden scrolls (wheel or ←/→ also work)
+- Move the mouse: the visitor follows. Scroll the garden with the wheel / trackpad or ←/→
 - Click a flower: open details (←/→ switch between open flowers, Esc closes)
 - Bottom ticks: the 100 days, click to jump
