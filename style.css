@@ -1,0 +1,81 @@
+:root{
+  --ink:#1c1c1c; --ink-soft:#5c5c5a; --paper:#f6f6f3;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong",Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#e6e6e3;color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none;touch-action:none}
+
+/* 胶片颗粒 + 暗角：让黑白更柔和 */
+.grain,.vignette{position:fixed;inset:0;pointer-events:none}
+.grain{opacity:.16;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.vignette{background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(30,30,30,.18) 100%)}
+
+.hud-title{position:fixed;left:28px;top:22px;pointer-events:none}
+.hud-title h1{margin:0;font-weight:400;font-size:18px;letter-spacing:.35em;color:var(--ink)}
+.hud-title p{margin:6px 0 0;font-size:12px;letter-spacing:.2em;color:var(--ink-soft)}
+
+.intro{position:fixed;left:50%;top:18%;transform:translateX(-50%);text-align:center;pointer-events:none;
+  transition:opacity 1.6s ease;color:var(--ink)}
+.intro p{margin:0;font-size:20px;letter-spacing:.3em}
+.intro .sub{margin-top:10px;font-size:13px;letter-spacing:.22em;color:var(--ink-soft)}
+.intro.gone{opacity:0}
+
+.cursor{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;pointer-events:none;
+  border:1px solid rgba(28,28,28,.55);background:rgba(255,255,255,.35);
+  transition:width .35s,height .35s,margin .35s,background .35s,border-color .35s;will-change:transform}
+.cursor.hot{width:46px;height:46px;margin:-23px 0 0 -23px;background:rgba(255,255,255,.18);border-color:rgba(28,28,28,.8)}
+
+.tip{position:fixed;left:0;top:0;padding:6px 12px;font-size:12px;letter-spacing:.2em;color:var(--ink);
+  background:rgba(250,250,248,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-radius:99px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;will-change:transform}
+.tip.show{opacity:1}
+
+/* 底部 100 天刻度 */
+.ticks{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:2px;
+  padding:8px 14px;border-radius:99px;background:rgba(250,250,248,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  max-width:calc(100vw - 24px)}
+.ticks button{all:unset;cursor:pointer;width:3px;height:8px;border-radius:2px;background:rgba(28,28,28,.18);transition:height .25s,background .25s}
+.ticks button.full{height:14px;background:rgba(28,28,28,.8)}
+.ticks button.view{background:rgba(28,28,28,.5)}
+.ticks button.full.view{background:#000}
+.ticks button:hover{height:18px}
+
+/* 弹窗 */
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .5s ease;z-index:10}
+.modal.open{opacity:1;pointer-events:auto}
+.backdrop{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(246,246,243,.55),rgba(200,200,196,.78));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.card{position:relative;width:min(920px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;
+  padding:30px 30px 26px;border-radius:26px;background:linear-gradient(180deg,#fbfbf9,#efefec);
+  box-shadow:0 30px 80px rgba(20,20,20,.22),inset 0 1px 0 #fff;
+  transform:translateY(24px) scale(.97);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.modal.open .card{transform:none}
+.close{all:unset;position:absolute;right:14px;top:12px;z-index:2;width:32px;height:32px;text-align:center;font-size:24px;line-height:31px;cursor:pointer;color:var(--ink);border-radius:50%;background:rgba(250,250,248,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.close:hover{color:var(--ink)}
+.pair{display:flex;gap:22px;align-items:stretch;justify-content:center}
+.pair figure{margin:0;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center}
+.pair .sketch{flex:1.1 1 0}
+.pair .sketch img{background:radial-gradient(circle,#fff 30%,#ecece8 100%);border-radius:18px}
+.pair img{width:100%;height:min(52vh,460px);object-fit:contain;display:block}
+.pair .photo img{object-fit:cover;border-radius:18px;filter:grayscale(1) contrast(.95);box-shadow:0 12px 30px rgba(20,20,20,.18)}
+.modal.open .photo img{animation:colorize 1.8s .6s ease forwards}
+@keyframes colorize{to{filter:grayscale(0) contrast(1)}}
+.pair figcaption{margin-top:10px;font-size:11px;letter-spacing:.4em;color:var(--ink-soft)}
+.meta{text-align:center;margin-top:18px;padding:0 12px}
+.meta .day{font-size:12px;letter-spacing:.4em;color:var(--ink-soft)}
+.meta h2{margin:6px 0 10px;font-weight:400;font-size:22px;letter-spacing:.25em}
+.meta p{margin:0 auto;max-width:34em;font-size:16px;line-height:1.9;letter-spacing:.08em;color:#333}
+.nav{position:absolute;left:0;right:0;top:44%;display:flex;justify-content:space-between;pointer-events:none;padding:0 6px}
+.nav button{all:unset;pointer-events:auto;cursor:pointer;font-size:34px;line-height:1;padding:6px 10px;color:rgba(28,28,28,.35);transition:color .2s}
+.nav button:hover{color:var(--ink)}
+.nav button[disabled]{visibility:hidden}
+
+@media (max-width:640px){
+  .pair{flex-direction:column;gap:16px}
+  .pair img{height:34vh}
+  .card{padding:22px 16px}
+  .hud-title{left:16px}
+  .nav{display:none}
+}
