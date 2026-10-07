@@ -1,19 +1,19 @@
-# 100 Days Garden
+# 一百天花园
 
-One photo + one sketch per day, grown into a flower. Your mouse is a little visitor: move it to walk around, get close and a flower wakes up, click it to see the sketch, the photo and a one-line note.
+每天一张照片 + 一张素描，长成花园里的一朵花。鼠标是花园里的“小人”：移动鼠标即散步，靠近花会苏醒，点击花朵查看素描、照片和一句话。
 
-Open `index.html` directly (plain static site, no build step).
+直接双击 `index.html` 即可打开（纯静态，无需构建）。
 
-## Adding a day
+## 每天新增一朵
 
-1. Put the sketch and the photo in `assets/` (long side ≤ 1200px, webp/jpg). Sketches are best as black lines on a transparent background; white backgrounds work too.
-2. Add an entry to `entries` in `data.js`:
+1. 把素描和照片放进 `assets/`（建议长边 ≤ 1200px，webp/jpg）。素描最好是黑线 + 透明底；白底图也能用。
+2. 在 `data.js` 的 `entries` 里加一项：
 
 ```js
-{ day: 3, title: "Title", sketch: "assets/day03-sketch.webp", photo: "assets/day03-photo.webp", caption: "One sentence" }
+{ day: 3, title: "标题", sketch: "assets/day03-sketch.webp", photo: "assets/day03-photo.webp", caption: "一句话" }
 ```
 
-## Controls
-- Move the mouse: the visitor follows; while the mouse is moving near the left/right edge the garden scrolls (it stops as soon as the mouse stops). Wheel / trackpad or ←/→ also work
-- Click a flower: open details (←/→ switch between open flowers, Esc closes)
-- Bottom ticks: the 100 days, click to jump
+## 操作
+- 鼠标移动：小人跟随；靠近左右边缘，花园平移（也可滚轮 / ←→）
+- 点击花朵：打开详情（弹窗内 ←→ 切换已开的花，Esc 关闭）
+- 底部刻度：100 天，点击跳转

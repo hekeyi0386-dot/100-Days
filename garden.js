@@ -1,9 +1,8 @@
-/* 100 Days Garden: the mouse is a little "visitor" strolling a black-and-white garden.
- * Everything is drawn procedurally on a canvas; one flower per day, its head is that day's sketch. */
+/* 一百天花园 —— 鼠标是"假的人"，在黑白的花园里散步。
+ * 画面全部由 canvas 程序化绘制；每天一朵花，花头就是当天的素描。 */
 (() => {
   const $ = (s) => document.querySelector(s);
   const G = window.GARDEN;
-  if (!G) { window.__showErr && window.__showErr("data.js did not load (window.GARDEN is missing)"); return; }
   const TOTAL = G.total;
   const SLOT = 300; // 相邻两天在世界里的间距
   const START = 440; // 第 1 天的 x
@@ -75,7 +74,7 @@
   }
 
   /* ---------- 状态 ---------- */
-  let mx = innerWidth * 0.3, my = innerHeight * 0.8, moved = 0, lastMove = 0;
+  let mx = innerWidth * 0.3, my = innerHeight * 0.8, inside = false, moved = 0;
   let px = mx, py = my, vx = 0, dir = 1, stepT = 0;
   let camX = 0, camTarget = null, wind = 0.6;
   let hovered = null, modalOpen = false;
@@ -303,12 +302,11 @@
         prints.push({ x: px + camX, y: py + (prints.length % 2 ? 3 : -3), t, s: U * (0.68 + 0.5 * clamp((py - H * 0.6) / (H * 0.3), 0, 1)) });
         if (prints.length > 40) prints.shift();
       }
-      // 鼠标靠近左右边缘 -> 画面平移；鼠标一停就不再滑动
-      if (camTarget === null) {
-        const moving = clamp(1 - (t - lastMove) / 220, 0, 1);
+      // 鼠标靠近左右边缘 -> 画面平移
+      if (inside && camTarget === null) {
         const ex = mx / W; let v = 0;
         if (ex > 0.74) v = (ex - 0.74) / 0.26; else if (ex < 0.26) v = -(0.26 - ex) / 0.26;
-        camX += v * Math.abs(v) * 0.6 * dt * moving;
+        camX += v * Math.abs(v) * 0.6 * dt;
       }
     } else vx *= 0.9;
     if (camTarget !== null) {
@@ -330,10 +328,6 @@
   /* ---------- 主循环 ---------- */
   let last = performance.now(), viewTick = 0;
   function frame(t) {
-    try { render(t); } catch (err) { window.__showErr && window.__showErr("Draw error: " + err.message); console.error(err); }
-    requestAnimationFrame(frame);
-  }
-  function render(t) {
     const dt = clamp(t - last, 1, 50); last = t;
     const pwx = update(dt, t);
 
@@ -356,6 +350,7 @@
     tipEl.style.transform = `translate(${mx + 18}px,${my + 20}px)`;
 
     if (++viewTick % 8 === 0) updateTicks();
+    requestAnimationFrame(frame);
   }
 
   function drawMotes(t, dt) {
@@ -384,11 +379,11 @@
     const f = hovered;
     cursorEl.classList.toggle("hot", !!(f && f.e));
     if (!f) { tipEl.classList.remove("show"); return; }
-    tipEl.textContent = f.e ? `Day ${pad(f.day)} · ${f.e.title}` : `Day ${pad(f.day)} · not yet`;
+    tipEl.textContent = f.e ? `Day ${pad(f.day)} · ${f.e.title}` : `Day ${pad(f.day)} · 还没开`;
     tipEl.classList.add("show");
   }
 
-  $("#count").textContent = `${G.entries.length} / ${TOTAL} in bloom`;
+  $("#count").textContent = `${G.entries.length} / ${TOTAL} 朵已开`;
   const ticksEl = $("#ticks");
   const tickBtns = flowers.map((f) => {
     const b = document.createElement("button");
@@ -404,31 +399,21 @@
   function point(e) {
     if (modalOpen) return;
     const dx = e.clientX - mx, dy = e.clientY - my;
-    mx = e.clientX; my = e.clientY; lastMove = performance.now();
+    mx = e.clientX; my = e.clientY; inside = true;
     moved += Math.abs(dx) + Math.abs(dy);
     if (moved > 60) introEl.classList.add("gone");
-    armIdle();
   }
-  // 鼠标长时间不动，提示语重新浮现
-  const IDLE_MS = 8000;
-  let idleTimer = 0;
-  function armIdle() {
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      if (modalOpen) return armIdle();
-      moved = 0; introEl.classList.remove("gone");
-    }, IDLE_MS);
-  }
-  armIdle();
   addEventListener("pointermove", point);
   addEventListener("pointerdown", point);
+  document.addEventListener("pointerleave", () => { inside = false; });
+  document.documentElement.addEventListener("mouseleave", () => { inside = false; });
   cvs.addEventListener("click", (e) => {
     const f = hitTest(e.clientX, e.clientY);
     if (f && f.e) openDay(f.day);
   });
   addEventListener("wheel", (e) => {
     if (modalOpen) return;
-    armIdle(); camTarget = null; camX = clamp(camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.9, 0, WORLD - W);
+    camTarget = null; camX = clamp(camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.9, 0, WORLD - W);
   }, { passive: true });
 
   /* ---------- 弹窗 ---------- */
@@ -446,12 +431,12 @@
     $("#m-caption").textContent = e.caption || "";
     const idx = filled.indexOf(day);
     $("#m-prev").disabled = idx <= 0; $("#m-next").disabled = idx >= filled.length - 1;
-    modalOpen = true; hovered = null; updateTip(); introEl.classList.add("gone");
+    modalOpen = true; hovered = null; updateTip();
     cursorEl.style.opacity = 0; tipEl.classList.remove("show");
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false");
   }
   function closeModal() {
-    armIdle(); modalOpen = false; modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true");
+    modalOpen = false; modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true");
     cursorEl.style.opacity = "";
   }
   function step(d) { const i = filled.indexOf(cur) + d; if (filled[i]) openDay(filled[i]); }
