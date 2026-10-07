@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>一百天花园</title>
+<title>Keyi's Garden</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,27 +12,26 @@
 <div class="vignette"></div>
 
 <header class="hud-title">
-  <h1>一百天花园</h1>
-  <p id="count">0 / 100 朵已开</p>
+  <h1>Keyi's Garden</h1>
 </header>
 
 <div class="intro" id="intro">
-  <p>移动鼠标，在花园里走走</p>
-  <p class="sub">靠近花朵它会苏醒，点一点，看看那天</p>
+  <p>Move your mouse to wander the garden</p>
+  <p class="sub">Walk close and a flower wakes. Click it to see that day.</p>
 </div>
 
 <div class="tip" id="tip"></div>
 <div class="cursor" id="cursor"></div>
 
-<nav class="ticks" id="ticks" aria-label="100 天"></nav>
+<nav class="ticks" id="ticks" aria-label="100 days"></nav>
 
 <div class="modal" id="modal" aria-hidden="true">
   <div class="backdrop" data-close></div>
   <article class="card" role="dialog" aria-modal="true">
-    <button class="close" data-close aria-label="关闭">×</button>
+    <button class="close" data-close aria-label="Close">×</button>
     <div class="pair">
-      <figure class="sketch"><img id="m-sketch" alt="素描"><figcaption>素描</figcaption></figure>
-      <figure class="photo"><img id="m-photo" alt="照片"><figcaption>现实</figcaption></figure>
+      <figure class="sketch"><img id="m-sketch" alt="Sketch"><figcaption>Sketch</figcaption></figure>
+      <figure class="photo"><img id="m-photo" alt="Photo"><figcaption>Reality</figcaption></figure>
     </div>
     <div class="meta">
       <span class="day" id="m-day"></span>
@@ -40,8 +39,8 @@
       <p id="m-caption"></p>
     </div>
     <div class="nav">
-      <button id="m-prev" aria-label="上一朵">‹</button>
-      <button id="m-next" aria-label="下一朵">›</button>
+      <button id="m-prev" aria-label="Previous">‹</button>
+      <button id="m-next" aria-label="Next">›</button>
     </div>
   </article>
 </div>
