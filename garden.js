@@ -1,5 +1,5 @@
-/* 一百天花园 —— 鼠标是"假的人"，在黑白的花园里散步。
- * 画面全部由 canvas 程序化绘制；每天一朵花，花头就是当天的素描。 */
+/* 100 Days Garden: the mouse is a little "visitor" strolling a black-and-white garden.
+ * Everything is drawn procedurally on a canvas; one flower per day, its head is that day's sketch. */
 (() => {
   const $ = (s) => document.querySelector(s);
   const G = window.GARDEN;
@@ -302,7 +302,7 @@
         prints.push({ x: px + camX, y: py + (prints.length % 2 ? 3 : -3), t, s: U * (0.68 + 0.5 * clamp((py - H * 0.6) / (H * 0.3), 0, 1)) });
         if (prints.length > 40) prints.shift();
       }
-      // 鼠标靠近左右边缘 -> 画面平移
+      // near left/right edge -> scroll
       if (inside && camTarget === null) {
         const ex = mx / W; let v = 0;
         if (ex > 0.74) v = (ex - 0.74) / 0.26; else if (ex < 0.26) v = -(0.26 - ex) / 0.26;
@@ -379,11 +379,11 @@
     const f = hovered;
     cursorEl.classList.toggle("hot", !!(f && f.e));
     if (!f) { tipEl.classList.remove("show"); return; }
-    tipEl.textContent = f.e ? `Day ${pad(f.day)} · ${f.e.title}` : `Day ${pad(f.day)} · 还没开`;
+    tipEl.textContent = f.e ? `Day ${pad(f.day)} · ${f.e.title}` : `Day ${pad(f.day)} · not yet`;
     tipEl.classList.add("show");
   }
 
-  $("#count").textContent = `${G.entries.length} / ${TOTAL} 朵已开`;
+  $("#count").textContent = `${G.entries.length} / ${TOTAL} in bloom`;
   const ticksEl = $("#ticks");
   const tickBtns = flowers.map((f) => {
     const b = document.createElement("button");

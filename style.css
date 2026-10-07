@@ -1,6 +1,6 @@
 :root{
   --ink:#1c1c1c; --ink-soft:#5c5c5a; --paper:#f6f6f3;
-  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong",Georgia,"Times New Roman",serif;
+  --serif:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman","Songti SC",serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:#e6e6e3;color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased}
@@ -13,7 +13,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#e6e6e3;color:var(--in
 .vignette{background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(30,30,30,.18) 100%)}
 
 .hud-title{position:fixed;left:28px;top:22px;pointer-events:none}
-.hud-title h1{margin:0;font-weight:400;font-size:18px;letter-spacing:.35em;color:var(--ink)}
+.hud-title h1{margin:0;font-weight:400;font-size:18px;letter-spacing:.2em;color:var(--ink)}
 .hud-title p{margin:6px 0 0;font-size:12px;letter-spacing:.2em;color:var(--ink-soft)}
 
 .intro{position:fixed;left:50%;top:18%;transform:translateX(-50%);text-align:center;pointer-events:none;
