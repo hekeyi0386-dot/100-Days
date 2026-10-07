@@ -64,6 +64,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#e6e6e3;color:var(--in
 .pair figcaption{margin-top:10px;font-size:11px;letter-spacing:.4em;color:var(--ink-soft)}
 .meta{text-align:center;margin-top:18px;padding:0 12px}
 .meta .day{font-size:12px;letter-spacing:.4em;color:var(--ink-soft)}
+.meta [hidden]{display:none}
 .meta h2{margin:6px 0 10px;font-weight:400;font-size:22px;letter-spacing:.25em}
 .meta p{margin:0 auto;max-width:34em;font-size:16px;line-height:1.9;letter-spacing:.08em;color:#333}
 .nav{position:absolute;left:0;right:0;top:44%;display:flex;justify-content:space-between;pointer-events:none;padding:0 6px}

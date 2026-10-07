@@ -379,7 +379,7 @@
     const f = hovered;
     cursorEl.classList.toggle("hot", !!(f && f.e));
     if (!f) { tipEl.classList.remove("show"); return; }
-    tipEl.textContent = f.e ? `Day ${pad(f.day)} · ${f.e.title}` : `Day ${pad(f.day)} · not yet`;
+    tipEl.textContent = !f.e ? `Day ${pad(f.day)} · not yet` : f.e.title ? `Day ${pad(f.day)} · ${f.e.title}` : `Day ${pad(f.day)}`;
     tipEl.classList.add("show");
   }
 
@@ -427,7 +427,9 @@
     ph.style.animation = "none"; void ph.offsetWidth; ph.style.animation = "";
     $("#m-day").textContent = `Day ${pad(day)}`;
     $("#m-title").textContent = e.title || "";
+    $("#m-title").hidden = !e.title;
     $("#m-caption").textContent = e.caption || "";
+    $("#m-caption").hidden = !e.caption;
     const idx = filled.indexOf(day);
     $("#m-prev").disabled = idx <= 0; $("#m-next").disabled = idx >= filled.length - 1;
     modalOpen = true; hovered = null; updateTip();
