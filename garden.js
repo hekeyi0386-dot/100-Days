@@ -410,10 +410,12 @@
     const f = hitTest(e.clientX, e.clientY);
     if (f && f.e) openDay(f.day);
   });
+  // passive:false + preventDefault stops the trackpad two-finger swipe from triggering browser back/forward
   addEventListener("wheel", (e) => {
+    e.preventDefault();
     if (modalOpen) return;
     camTarget = null; camX = clamp(camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.9, 0, WORLD - W);
-  }, { passive: true });
+  }, { passive: false });
 
   /* ---------- 弹窗 ---------- */
   const modal = $("#modal");
