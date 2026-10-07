@@ -31,15 +31,17 @@ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;backgrou
   border-radius:99px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;will-change:transform}
 .tip.show{opacity:1}
 
-/* 底部 100 天刻度 */
-.ticks{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:2px;
+/* 底部 100 天刻度：靠近的天数会像程序坞一样隆起 */
+.ticks{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:2px;height:54px;
   padding:8px 14px;border-radius:99px;background:rgba(250,250,248,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   max-width:calc(100vw - 24px)}
-.ticks button{all:unset;cursor:pointer;width:3px;height:8px;border-radius:2px;background:rgba(28,28,28,.18);transition:height .25s,background .25s}
-.ticks button.full{height:14px;background:rgba(28,28,28,.8)}
-.ticks button.view{background:rgba(28,28,28,.5)}
-.ticks button.full.view{background:#000}
-.ticks button:hover{height:18px}
+.ticks button{--h:8px;all:unset;cursor:pointer;width:3px;height:calc(var(--h) + var(--k,0) * 22px);border-radius:2px;
+  background:rgba(28,28,28,calc(.18 + var(--k,0) * .5));transition:height .12s ease-out,background .12s}
+.ticks button.full{--h:14px;background:rgba(28,28,28,calc(.65 + var(--k,0) * .35))}
+.tick-label{position:absolute;bottom:calc(100% + 10px);left:0;transform:translateX(-50%);padding:5px 12px;font-size:11px;letter-spacing:.18em;white-space:nowrap;
+  color:var(--ink);background:rgba(250,250,248,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:99px;pointer-events:none;
+  transition:left .18s ease-out}
+.tick-label.empty{color:var(--ink-soft)}
 
 /* 弹窗 */
 .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .5s ease;z-index:10}

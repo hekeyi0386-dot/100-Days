@@ -326,7 +326,7 @@
   }
 
   /* ---------- 主循环 ---------- */
-  let last = performance.now(), viewTick = 0;
+  let last = performance.now();
   function frame(t) {
     const dt = clamp(t - last, 1, 50); last = t;
     const pwx = update(dt, t);
@@ -349,7 +349,7 @@
     cursorEl.style.transform = `translate(${mx}px,${my}px)`;
     tipEl.style.transform = `translate(${mx + 18}px,${my + 20}px)`;
 
-    if (++viewTick % 8 === 0) updateTicks();
+    updateBar(pwx);
     requestAnimationFrame(frame);
   }
 
@@ -390,8 +390,31 @@
     b.addEventListener("click", () => { camTarget = clamp(f.x - W * 0.5, 0, WORLD - W); });
     ticksEl.appendChild(b); return b;
   });
-  function updateTicks() {
-    for (const f of flowers) tickBtns[f.i].classList.toggle("view", f.x > camX + 40 && f.x < camX + W - 40);
+  // The bar reacts live: the days nearest the visitor (or the pointer, when it is over the bar) swell like a dock.
+  const labelEl = document.createElement("div");
+  labelEl.className = "tick-label"; ticksEl.appendChild(labelEl);
+  let focusF = 0, barPointer = null, labelIdx = -1;
+  const kPrev = new Array(TOTAL).fill(-1);
+  ticksEl.addEventListener("pointermove", (e) => {
+    const r0 = tickBtns[0].getBoundingClientRect(), r1 = tickBtns[TOTAL - 1].getBoundingClientRect();
+    barPointer = clamp((e.clientX - (r0.left + r0.width / 2)) / ((r1.left - r0.left) / (TOTAL - 1)), 0, TOTAL - 1);
+  });
+  ticksEl.addEventListener("pointerleave", () => { barPointer = null; });
+  function updateBar(pwx) {
+    const target = barPointer !== null ? barPointer : clamp((pwx - START) / SLOT, 0, TOTAL - 1);
+    focusF += (target - focusF) * 0.18;
+    for (let i = 0; i < TOTAL; i++) {
+      const d = i - focusF, k = Math.exp(-(d * d) / 6);
+      if (Math.abs(k - kPrev[i]) > 0.01) { kPrev[i] = k; tickBtns[i].style.setProperty("--k", k.toFixed(2)); }
+    }
+    const idx = Math.round(focusF);
+    if (idx !== labelIdx) {
+      labelIdx = idx;
+      const f = flowers[idx], b = tickBtns[idx];
+      labelEl.textContent = `Day ${pad(f.day)}` + (f.e && f.e.title ? ` · ${f.e.title}` : "") + (f.e ? "" : " · not yet");
+      labelEl.classList.toggle("empty", !f.e);
+      labelEl.style.left = (b.offsetLeft + b.offsetWidth / 2) + "px";
+    }
   }
 
   /* ---------- 输入 ---------- */
