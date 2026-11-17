@@ -1,26 +1,19 @@
-# 100 Days of Frames
+# Keyi's Garden
 
-One photograph a day for 100 days, shown as a single personal sky: every day is a star, and the whole
-hundred are visible at once. Hover a star and it wakes (a little bloom, its constellation lights up, the
-day and date appear); click it to step into that day.
+One photo + one sketch per day, grown into a flower. Your mouse is a little visitor: move it to walk around, get close and a flower wakes up, click it to see the sketch, the photo and a one-line note.
 
 Open `index.html` directly (plain static site, no build step).
 
-## How the sky works
-- **Layout** – days grow outward from the centre in a golden-angle spiral (like sunflower seeds), then a short
-  relaxation pass keeps photographs from touching. Each day owns a fixed place, so adding a day lights up a
-  star and never moves the others.
-- **Constellations** – faint vines connect days that rhyme (light, windows, repetition, texture...). They live
-  in `config.js` under `constellations`; a day can belong to two of them.
-- **Garden** – tiny sprigs grow in the gaps, and a star blooms when you find it.
+## Adding a day
 
-## Adding days
-1. Put the new sketch and photo in the upload folder, named `<n>s Large.jpeg` and `<n>p Large.jpeg`.
-2. Run `python3 tools/build_garden.py "S for Sketches；P for Photos"`. It makes the web-sized photo, the
-   transparent sketch and a small square thumbnail, and rewrites `data.js`. Existing outputs are kept
-   (`--rebuild` to redo everything).
-3. Titles and notes: add them to `captions.json` as `{"27": {"title": "...", "caption": "..."}}` and run the
-   script again.
+1. Put the sketch and the photo in `assets/` (long side ≤ 1200px, webp/jpg). Sketches are best as black lines on a transparent background; white backgrounds work too.
+2. Add an entry to `entries` in `data.js`:
 
-## Settings (`config.js`)
-`title`, `subtitle`, `line`, `startDate` (Day 1's date; other dates are counted from it), and `constellations`.
+```js
+{ day: 3, title: "Title", sketch: "assets/day03-sketch.webp", photo: "assets/day03-photo.webp", caption: "One sentence" }
+```
+
+## Controls
+- Move the mouse: the visitor follows; near the left/right edge the garden scrolls (wheel or ←/→ also work)
+- Click a flower: open details (←/→ switch between open flowers, Esc closes)
+- Bottom ticks: the 100 days, click to jump
