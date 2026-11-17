@@ -3,50 +3,80 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Keyi's Garden</title>
-<link rel="stylesheet" href="style.css?v=20261008a">
+<title>100 Days of Frames</title>
+<meta name="description" content="100 small moments, forming one personal sky.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20261117a">
 </head>
 <body>
-<canvas id="scene"></canvas>
-<div class="grain"></div>
-<div class="vignette"></div>
 
-<header class="hud-title">
-  <h1>Keyi's Garden</h1>
-  <p id="count" hidden></p><!-- kept so older cached scripts do not crash -->
+<!-- the sky -->
+<div class="dust" id="dust" aria-hidden="true"></div>
+<main class="sky" id="sky" aria-label="100 days, one personal sky">
+  <svg class="layer" id="garden" aria-hidden="true"></svg>
+  <svg class="layer" id="lines" aria-hidden="true"></svg>
+  <div class="bloom" id="bloom" aria-hidden="true">
+    <svg viewBox="0 0 100 100">
+      <g class="petals"></g>
+    </svg>
+  </div>
+</main>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="masthead" id="masthead">
+  <h1>100 Days <em>of</em> Frames</h1>
+  <p class="sub" id="sub"></p>
+  <p class="line" id="line"></p>
 </header>
+<p class="meta" id="meta"></p>
+<p class="hint" id="hint"></p>
 
-<div class="intro" id="intro">
-  <p>Move your mouse to wander the garden</p>
-  <p class="sub">Walk close and a flower wakes. Click it to see that day.</p>
+<div class="card" id="card" aria-hidden="true">
+  <div class="c-day"></div>
+  <div class="c-date"></div>
+  <div class="c-title"></div>
+  <div class="c-group"></div>
 </div>
 
-<div class="tip" id="tip"></div>
-<div class="cursor" id="cursor"></div>
+<!-- one day -->
+<section class="day" id="day" aria-hidden="true">
+  <div class="day-backdrop" data-close></div>
+  <article class="panel" role="dialog" aria-modal="true" aria-labelledby="d-day">
+    <button class="x" data-close aria-label="Close">
+      <svg viewBox="0 0 20 20"><path d="M4 4l12 12M16 4L4 16" /></svg>
+    </button>
+    <svg class="sprig" viewBox="0 0 120 120" aria-hidden="true"></svg>
 
-<nav class="ticks" id="ticks" aria-label="100 days"></nav>
+    <figure class="photo"><img id="d-photo" alt=""></figure>
 
-<div class="modal" id="modal" aria-hidden="true">
-  <div class="backdrop" data-close></div>
-  <article class="card" role="dialog" aria-modal="true">
-    <button class="close" data-close aria-label="Close">×</button>
-    <div class="pair">
-      <figure class="sketch"><img id="m-sketch" alt="Sketch"><figcaption>Sketch</figcaption></figure>
-      <figure class="photo"><img id="m-photo" alt="Photo"><figcaption>Reality</figcaption></figure>
-    </div>
-    <div class="meta">
-      <span class="day" id="m-day"></span>
-      <h2 id="m-title"></h2>
-      <p id="m-caption"></p>
-    </div>
-    <div class="nav">
-      <button id="m-prev" aria-label="Previous">‹</button>
-      <button id="m-next" aria-label="Next">›</button>
+    <div class="info">
+      <p class="d-eyebrow" id="d-day"></p>
+      <p class="d-date" id="d-date"></p>
+      <h2 class="d-title" id="d-title"></h2>
+      <p class="d-note" id="d-note"></p>
+
+      <figure class="d-sketch">
+        <img id="d-sketch" alt="The sketch for this day">
+        <figcaption>The sketch</figcaption>
+      </figure>
+
+      <div class="d-sky">
+        <svg id="mini" viewBox="0 0 320 200" aria-label="Where this day sits in the sky"></svg>
+        <p id="d-group"></p>
+      </div>
+
+      <nav class="d-nav">
+        <button id="d-prev" aria-label="Previous day"><span>&larr;</span> Previous</button>
+        <button id="d-next" aria-label="Next day">Next <span>&rarr;</span></button>
+      </nav>
     </div>
   </article>
-</div>
+</section>
 
-<script src="data.js?v=20261007b"></script>
-<script src="garden.js?v=20261008a"></script>
+<script src="data.js?v=20261117a"></script>
+<script src="config.js?v=20261117a"></script>
+<script src="sky.js?v=20261117a"></script>
 </body>
 </html>
