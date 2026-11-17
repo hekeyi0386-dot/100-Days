@@ -83,15 +83,20 @@ export class Flower {
     const g = this.head, face = Math.atan2(cam.x - this.headPos.x, cam.z - this.headPos.z);
     const rise = Math.atan2(cam.y - this.headPos.y, Math.hypot(cam.x - this.headPos.x, cam.z - this.headPos.z));
     g.position.copy(this.headPos);
-    g.rotation.y = lerp(L.yaw, clamp(face, -1.0, 1.0), hv);
-    g.rotation.x = lerp(-0.1, -clamp(rise, -0.3, 0.5), hv);
-    g.scale.setScalar(this.R * (1 + 0.17 * hv + 0.012 * Math.sin(t * 1.2 + L.phase)));
+    // upright (and turning to you when awake) down on the ground; lifting their faces to the sky from above
+    const tb = field.faceUp, hh = hv * (1 - tb);
+    g.rotation.y = lerp(lerp(L.yaw, clamp(face, -1.0, 1.0), hh), field.topYaw, tb);
+    g.rotation.x = lerp(lerp(-0.1, -clamp(rise, -0.3, 0.5), hh), -1.31, tb);
+    g.scale.setScalar(this.R * (1 + 0.17 * hv + 0.012 * Math.sin(t * 1.2 + L.phase) + tb * (0.7 + 0.2 * hv)));
     if (this.hasImage) {
       if (this.textureState === 2) this.inkFade = Math.min(1, this.inkFade + dt * 1.4);
       this.disc.material.opacity = 0.93 * this.dim;
       this.disc.material.color.copy(PAPER).lerp(PAPER_HOT, hv);
       this.ink.material.opacity = this.inkFade * this.dim * (0.9 + 0.1 * hv);
-      this.glow.material.opacity = 0.75 * hv;
+      const want = tb > 0.5 ? this.shared.ringTex : this.shared.glowTex;      // a soft ring from above, a soft glow on the ground
+      if (this.glow.material.map !== want) this.glow.material.map = want;
+      this.glow.scale.setScalar(4.4 + 1.5 * tb);
+      this.glow.material.opacity = (0.75 + 0.2 * tb) * hv;
     }
   }
 }

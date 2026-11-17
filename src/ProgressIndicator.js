@@ -19,8 +19,10 @@ export class ProgressIndicator {
     this.last = { day: -1, lo: -1, hi: -1 };
   }
 
-  update(day, lo, hi, hoverDay) {
-    if (day !== this.last.day) {
+  update(day, lo, hi, hoverDay, all) {
+    if (all !== this.last.all) { this.last.all = all; this.last.day = -1; }
+    if (all) { this.big.innerHTML = "ALL " + this.total + " <i>DAYS</i>"; this.label.textContent = ""; }
+    else if (day !== this.last.day) {
       this.last.day = day; this.label.textContent = "Day " + pad2(day);
       this.big.innerHTML = "DAY " + pad3(day) + " <i>/ " + this.total + "</i>";
       this.marker.style.left = ((day - 0.5) / this.total) * 100 + "%";

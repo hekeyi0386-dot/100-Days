@@ -1,7 +1,7 @@
 /* All 100 flowers. A reusable <Flower> is mapped over the existing day data; nothing is hand-placed. */
 import * as THREE from "three";
 import { Flower } from "./Flower.js";
-import { layoutFlowers, zOfT, terrainHeight, GARDEN } from "./layout.js";
+import { layoutFlowers, fieldBounds, zOfT, terrainHeight, pathX, GARDEN } from "./layout.js";
 import { hash } from "./utils.js";
 
 function radialTexture(stops) {
@@ -36,17 +36,18 @@ export class FlowerField {
     const layout = layoutFlowers(total, { narrow: mobile && matchMedia("(max-aspect-ratio: 1/1)").matches });
 
     // shared geometry & materials (reused by every flower)
+    const glowTex = radialTexture([[0, "rgba(255,244,205,1)"], [0.35, "rgba(255,236,176,.55)"], [1, "rgba(255,236,176,0)"]]);
+    const ringTex = radialTexture([[0, "rgba(255,236,176,0)"], [0.55, "rgba(255,232,160,.0)"], [0.7, "rgba(255,226,140,.95)"], [0.76, "rgba(255,226,140,.5)"], [1, "rgba(255,236,176,0)"]]);
     const shared = this.shared = {
       discGeo: new THREE.CircleGeometry(1, 48), inkGeo: new THREE.PlaneGeometry(2, 2), glowGeo: new THREE.PlaneGeometry(1, 1),
       discMat: new THREE.MeshBasicMaterial({ color: 0xe6e2d5, transparent: true, opacity: 0.93, depthWrite: false }),
-      glowMat: new THREE.MeshBasicMaterial({
-        map: radialTexture([[0, "rgba(255,244,205,1)"], [0.35, "rgba(255,236,176,.55)"], [1, "rgba(255,236,176,0)"]]),
-        color: 0xffffff, transparent: true, opacity: 0, depthWrite: false,
-      }),
+      glowTex, ringTex,
+      glowMat: new THREE.MeshBasicMaterial({ map: glowTex, color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }),
       ghostGeo: new THREE.PlaneGeometry(2, 2),
       ghostMat: new THREE.MeshBasicMaterial({ map: ghostTexture(), transparent: true, depthWrite: false }),
     };
 
+    this.bounds = fieldBounds(layout);
     const N = layout.length;
     const stemGeo = new THREE.CylinderGeometry(0.02, 0.05, 1, 6, 1); stemGeo.translate(0, 0.5, 0);
     this.stems = new THREE.InstancedMesh(stemGeo, new THREE.MeshLambertMaterial({ color: 0x80877a }), N);
@@ -73,7 +74,7 @@ export class FlowerField {
     this.byDay = new Map(this.flowers.map((f) => [f.day, f]));
     this.targets = this.flowers.map((f) => f.hit);
     this.loader = new THREE.TextureLoader();
-    this.loadTimer = 0; this.focused = null; this.hovered = null; this.wind = 0.6;
+    this.loadTimer = 0; this.focused = null; this.hovered = null; this.wind = 0.6; this.faceUp = 0; this.topYaw = Math.PI / 2; this.loadAll = false;
   }
 
   /* Tiny unnamed seedlings between the days. They thicken towards the back (and trail off past day 100),
@@ -87,7 +88,7 @@ export class FlowerField {
     for (let i = 0; i < count; i++) {
       const t = Math.min(1.12, 0.1 + 1.02 * Math.sqrt(hash(i, 31)));           // more of them the deeper you go
       const z = zOfT(t) + (hash(i, 32) - 0.5) * 5, side = hash(i, 33) > 0.5 ? 1 : -1;
-      const x = side * (GARDEN.corridor + 0.8 + hash(i, 34) * (12 + 34 * Math.sqrt(Math.min(t, 1))));
+      const x = pathX(z) + side * (GARDEN.corridor + 0.8 + hash(i, 34) * (9 + 18 * Math.sqrt(Math.min(t, 1))));
       const y = terrainHeight(x, z), h = 0.7 + hash(i, 35) * 1.3, r = 0.2 + hash(i, 36) * 0.22;
       p.set(x, y, z); e.set((hash(i, 37) - 0.5) * 0.18, 0, (hash(i, 38) - 0.5) * 0.18); q.setFromEuler(e);
       stems.setMatrixAt(i, m.compose(p, q, s.set(1, h, 1)));
@@ -109,13 +110,14 @@ export class FlowerField {
     const lead = this.focused || this.hovered;
     for (const f of this.flowers) {
       f.hoverTarget = f === this.hovered || f === this.focused ? 1 : 0;
-      f.dimTarget = lead && f !== lead && f.headPos.distanceTo(lead.headPos) < (this.focused ? 14 : 11) ? (this.focused ? 0.25 : 0.5) : 1;
+      f.dimTarget = lead && f !== lead && f.headPos.distanceTo(lead.headPos) < (this.focused ? 14 : 11 + 8 * this.faceUp) ? (this.focused ? 0.25 : 0.5) : 1;
     }
   }
 
   // lazy texture loading: nearest first, a couple at a time
-  loadNearby(cam, budget = 2) {
-    const pending = this.flowers.filter((f) => f.hasImage && f.textureState === 0 && f.headPos.distanceTo(cam) < (this.mobile ? 120 : 190));
+  loadNearby(cam, budget = 4) {
+    // every picture loads (they are small), the ones nearest the camera first, a few at a time
+    const pending = this.flowers.filter((f) => f.hasImage && f.textureState === 0);
     pending.sort((a, b) => a.headPos.distanceToSquared(cam) - b.headPos.distanceToSquared(cam));
     const inflight = this.flowers.reduce((n, f) => n + (f.textureState === 1 ? 1 : 0), 0);
     for (let i = 0; i < Math.min(pending.length, Math.max(0, budget + 2 - inflight)); i++) pending[i].loadTexture(this.loader, this.anisotropy);
@@ -126,6 +128,7 @@ export class FlowerField {
     for (const f of this.flowers) f.update(t, dt, cam.position, this.wind, this);
     this.stems.instanceMatrix.needsUpdate = true; this.leaves.instanceMatrix.needsUpdate = true;
     this.loadTimer -= dt;
-    if (this.loadTimer <= 0) { this.loadTimer = 0.25; this.loadNearby(cam.position); }
+    if (this.loadTimer <= 0) { this.loadTimer = 0.15; this.loadNearby(cam.position); }
+    this.shared.ghostMat.opacity = 1 - 0.5 * this.faceUp;                 // days still to come step back when seen from above
   }
 }

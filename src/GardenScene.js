@@ -13,8 +13,9 @@ import { createAtmosphere } from "./Atmosphere.js";
 import { FlowerField } from "./FlowerField.js";
 import { DayOverlay } from "./DayOverlay.js";
 import { ProgressIndicator } from "./ProgressIndicator.js";
+import { ViewSwitcher } from "./ViewSwitcher.js";
 import { tOfZ, zOfT } from "./layout.js";
-import { clamp, pad3 } from "./utils.js";
+import { clamp, lerp, pad3, smoothstep } from "./utils.js";
 
 export class GardenScene {
   constructor({ canvas, data, config }) {
@@ -37,7 +38,9 @@ export class GardenScene {
     this.field = new FlowerField(this.entries, this.total, { mobile: this.mobile, anisotropy: Math.min(4, r.capabilities.getMaxAnisotropy()) });
     this.scene.add(this.field.group);
 
-    this.controller = new CameraController(this.camera, canvas, { mobile: this.mobile });
+    this.controller = new CameraController(this.camera, canvas, { mobile: this.mobile, bounds: this.field.bounds });
+    this.views = new ViewSwitcher((name) => this.setView(name));
+    this.controller.onViewChange = (name) => this.viewChanged(name);
     this.overlay = new DayOverlay();
     this.timeline = new ProgressIndicator(this.total, this.filled, (d) => this.walkToDay(d));
     this.tag = document.querySelector("#tag");
@@ -46,6 +49,7 @@ export class GardenScene {
     this.raycaster = new THREE.Raycaster();
     this.current = null; this.last = performance.now(); this.frames = 0; this.slow = 0; this.t = 0;
     this.hintMoved = 0; this.idleTimer = 0;
+    this.fog = this.scene.fog; this.viewChanged("walk", true);
 
     this.bind(); this.resize(); this.armIdle();
   }
@@ -72,7 +76,7 @@ export class GardenScene {
     this.overlay.onPrev = () => this.step(-1);
     this.overlay.onNext = () => this.step(1);
     addEventListener("keydown", (e) => {
-      if (!this.current) return;
+      if (!this.current) { if (e.key === "Escape" && this.controller.view !== "walk") this.setView("walk"); return; }
       if (e.key === "Escape") this.closeDay(); else if (e.key === "ArrowLeft") this.step(-1); else if (e.key === "ArrowRight") this.step(1);
     });
     addEventListener("popstate", () => {
@@ -101,14 +105,36 @@ export class GardenScene {
     return null;
   }
 
+  /* ---------- camera views ---------- */
+  setView(name) { if (!this.current) this.controller.setView(name); }
+
+  viewChanged(name, initial = false) {
+    this.views.setActive(name);
+    for (const n of ["walk", "overview", "top"]) document.body.classList.toggle("view-" + n, n === name);
+    const coarse = matchMedia("(pointer:coarse)").matches;
+    this.hint.textContent = {
+      walk: coarse ? "Swipe to walk deeper \u00b7 tap a flower to enter a day" : "Scroll to walk deeper \u00b7 hover a flower \u00b7 click to enter a day",
+      overview: coarse ? "Swipe to drift along the garden \u00b7 tap a flower to descend" : "Scroll to drift along the garden \u00b7 click a flower to descend into it",
+      top: coarse ? "One field, one hundred days \u00b7 tap a day to descend" : "One field, one hundred days \u00b7 hover a flower \u00b7 click to descend into that day",
+    }[name];
+    this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle();
+    clearTimeout(this.hintFade);
+    if (!initial) this.hintFade = setTimeout(() => this.hint.classList.add("gone"), 6500);
+  }
+
+  // up high the haze steps back, so the whole field stays crisp
+  updateFog() {
+    const v = this.controller.v, a = smoothstep(0, 1, Math.min(v, 1)), b = smoothstep(1, 2, v);
+    this.fog.near = lerp(lerp(30, 55, a), 170, b); this.fog.far = lerp(lerp(285, 340, a), 760, b);
+  }
+
   /* ---------- one day ---------- */
   openDay(day, { fromHistory = false } = {}) {
     const f = this.field.byDay.get(day); if (!f || !f.hasImage) return;
     const first = !this.current;
-    if (first && this.controller.mode === "walk" && this.controller.hasPointer === false) this.field.setHover(null);
     this.current = f; document.body.classList.add("focusing");
     this.field.setHover(null); this.field.setFocus(f); this.hideTag();
-    this.controller.focusOn(f, first ? 1.7 : 1.3);
+    this.controller.focusOn(f, first ? 0 : 1.3);
     const idx = this.filled.indexOf(day);
     setTimeout(() => { if (this.current === f) this.overlay.show({ entry: f.entry, date: this.dateOf(day), hasPrev: idx > 0, hasNext: idx < this.filled.length - 1 }); }, first ? 650 : 250);
     if (!fromHistory) { if (first) history.pushState({ day }, "", "#day-" + day); else history.replaceState({ day }, "", "#day-" + day); }
@@ -132,13 +158,14 @@ export class GardenScene {
   walkToDay(day) {
     if (this.current) return;
     const f = this.field.byDay.get(day);
+    if (this.controller.view === "top") { if (f.hasImage) this.openDay(day); return; }
     this.controller.goToDay(f.base.z);
   }
 
   /* ---------- per frame ---------- */
   hover() {
     const c = this.controller;
-    if (this.current || c.mode !== "walk" || !c.hasPointer) { if (this.field.hovered) { this.field.setHover(null); this.hideTag(); } return; }
+    if (this.current || c.mode !== "free" || c.trans || !c.hasPointer) { if (this.field.hovered) { this.field.setHover(null); this.hideTag(); } return; }
     const f = this.pickNDC(c.pointer);
     this.field.setHover(f);
     if (f) this.showTag(f); else this.hideTag();
@@ -166,14 +193,15 @@ export class GardenScene {
 
   currentDay() {
     if (this.current) return this.current.day;
-    const z = this.camera.position.z - 38;
-    return clamp(Math.round(1 + tOfZ(z) * (this.total - 1)), 1, this.total);
+    return clamp(Math.round(1 + this.controller.ps * (this.total - 1)), 1, this.total);   // Day 1 at the entrance, Day 100 at the far end
   }
 
   resize() {
     const w = innerWidth, h = innerHeight, a = w / h;
     this.renderer.setSize(w, h, false);
-    this.camera.aspect = a; this.camera.fov = a < 0.85 ? 66 : a < 1.2 ? 58 : 52; this.camera.updateProjectionMatrix();
+    this.camera.aspect = a;
+    this.controller.setAspect(a, a < 0.85 ? 66 : a < 1.2 ? 58 : 52);
+    this.camera.fov = this.controller.fov; this.camera.updateProjectionMatrix();
   }
 
   /* quietly lower the resolution on slow machines */
@@ -188,13 +216,16 @@ export class GardenScene {
   frame = () => {
     const now = performance.now(), dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; this.t += dt;
     this.controller.update(dt);
+    this.field.faceUp = this.controller.faceUp; this.field.topYaw = this.controller.portrait ? 0 : Math.PI / 2; this.field.loadAll = this.controller.v > 0.5;
     this.field.update(this.t, dt, this.camera);
+    this.updateFog();
     this.atmosphere.update(this.t);
     this.sky.position.copy(this.camera.position);
     this.hover();
-    const day = this.currentDay(), z = this.camera.position.z;
-    const lo = clamp(Math.floor(1 + tOfZ(z - 4) * (this.total - 1)), 1, this.total), hi = clamp(Math.ceil(1 + tOfZ(z - 105) * (this.total - 1)), 1, this.total);
-    this.timeline.update(day, lo, hi, this.field.hovered ? this.field.hovered.day : 0);
+    const c = this.controller, day = this.currentDay(), z0 = lerp(c.zStart, c.zEnd, c.ps), a = smoothstep(0, 1, Math.min(c.v, 1)), top = smoothstep(1, 2, c.v);
+    let lo = clamp(Math.floor(1 + tOfZ(z0 - 4 + 14 * a) * (this.total - 1)), 1, this.total), hi = clamp(Math.ceil(1 + tOfZ(z0 - 105 - 30 * a) * (this.total - 1)), 1, this.total);
+    if (top > 0.5) { lo = 1; hi = this.total; }                       // from above, every day is in view
+    this.timeline.update(day, lo, hi, this.field.hovered ? this.field.hovered.day : 0, top > 0.5 && !this.current);
     this.renderer.render(this.scene, this.camera);
     this.watchPerformance(dt);
     requestAnimationFrame(this.frame);

@@ -44,6 +44,19 @@ body.focusing .timeline{opacity:0;pointer-events:none}
 .tl-now{position:absolute;left:0;bottom:7px;transform:translateX(-50%);font-weight:500;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
   color:var(--ink);white-space:nowrap;padding:2px 8px;border-radius:99px;background:rgba(251,249,243,.8)}
 
+/* ---------- camera views ---------- */
+.views{position:fixed;left:clamp(18px,2.8vw,40px);bottom:clamp(18px,3.2vh,32px);display:flex;gap:2px;padding:4px;border-radius:99px;
+  background:rgba(251,249,243,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 6px 24px rgba(80,84,70,.10),inset 0 0 0 1px rgba(255,255,255,.6);transition:opacity .5s}
+body.focusing .views{opacity:0;pointer-events:none}
+.views button{all:unset;cursor:pointer;white-space:nowrap;padding:7px 13px 6px;border-radius:99px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-soft);transition:color .3s,background .4s}
+.views button:hover{color:var(--ink)}
+.views button.on{color:var(--ink);background:rgba(255,255,255,.85);box-shadow:0 1px 6px rgba(80,84,70,.12)}
+.views button:focus-visible{outline:1px solid var(--sage);outline-offset:1px}
+body.view-top .tl-marker{opacity:0}
+.tl-marker{transition:left .35s ease-out,opacity .5s}
+
 /* ---------- hover tag ---------- */
 .tag{position:fixed;left:0;top:0;pointer-events:none;padding:11px 16px 12px;border-radius:14px;min-width:150px;
   background:rgba(251,249,243,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
@@ -96,6 +109,8 @@ body.no-gl #gl,body.no-gl .timeline,body.no-gl .hint{display:none}
 @media (max-width:760px){
   .hint{white-space:normal;text-align:center;width:min(78vw,320px);bottom:78px}
   .tl-start,.tl-end{display:none}
+  .views{left:50%;transform:translateX(-50%);bottom:auto;top:calc(clamp(16px,2.8vh,30px) + 62px)}
+  .views button{padding:6px 10px 5px;font-size:9px;letter-spacing:.16em}
   .timeline{padding:9px 12px 8px;gap:0}
   .tick{width:2px}.tl-track{gap:1px}
   .panel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:62vh;transform:translateY(30px);padding:18px 18px 16px}

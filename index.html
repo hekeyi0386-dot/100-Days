@@ -5,22 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Keyi's Garden</title>
 <meta name="description" content="A garden grown from 100 everyday observations: one flower, one frame, one day.">
-<link rel="stylesheet" href="style.css?v=202611171827">
+<link rel="stylesheet" href="style.css?v=202611171859">
 <script type="importmap">
 {
   "imports": {
     "three": "./vendor/three.module.js?v=187",
     "./vendor/three.core.js": "./vendor/three.core.js?v=187",
-    "./src/utils.js": "./src/utils.js?v=202611171827",
-    "./src/layout.js": "./src/layout.js?v=202611171827",
-    "./src/Terrain.js": "./src/Terrain.js?v=202611171827",
-    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611171827",
-    "./src/Flower.js": "./src/Flower.js?v=202611171827",
-    "./src/FlowerField.js": "./src/FlowerField.js?v=202611171827",
-    "./src/CameraController.js": "./src/CameraController.js?v=202611171827",
-    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611171827",
-    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611171827",
-    "./src/GardenScene.js": "./src/GardenScene.js?v=202611171827"
+    "./src/utils.js": "./src/utils.js?v=202611171859",
+    "./src/layout.js": "./src/layout.js?v=202611171859",
+    "./src/Terrain.js": "./src/Terrain.js?v=202611171859",
+    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611171859",
+    "./src/Flower.js": "./src/Flower.js?v=202611171859",
+    "./src/FlowerField.js": "./src/FlowerField.js?v=202611171859",
+    "./src/CameraController.js": "./src/CameraController.js?v=202611171859",
+    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611171859",
+    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611171859",
+    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611171859",
+    "./src/GardenScene.js": "./src/GardenScene.js?v=202611171859"
   }
 }
 </script>
@@ -36,6 +37,12 @@
 <p class="nowday" id="nowday" aria-live="polite"></p>
 
 <p class="hint" id="hint">Scroll to walk deeper &middot; hover a flower &middot; click to enter a day</p>
+
+<nav class="views" id="views" aria-label="Camera view">
+  <button data-view="walk" title="Walk through the garden (1)">Explore</button>
+  <button data-view="overview" title="Stand on the hill (2)">Overview</button>
+  <button data-view="top" title="See all 100 days from above (3)">Bird&rsquo;s eye</button>
+</nav>
 
 <nav class="timeline" id="timeline" aria-label="The 100 days">
   <span class="tl-start"></span>
@@ -72,8 +79,8 @@
 
 <div class="nogl" id="nogl"><p></p></div>
 
-<script src="data.js?v=202611171827"></script>
-<script src="config.js?v=202611171827"></script>
-<script type="module" src="./src/main.js?v=202611171827"></script>
+<script src="data.js?v=202611171859"></script>
+<script src="config.js?v=202611171859"></script>
+<script type="module" src="./src/main.js?v=202611171859"></script>
 </body>
 </html>

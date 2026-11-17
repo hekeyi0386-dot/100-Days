@@ -1,7 +1,7 @@
 /* Gently rolling ground, hand-tinted per vertex (ivory -> pale sage) with a faint pale trail
  * down the middle, plus layered far hills and a soft sky dome. No textures, no realism. */
 import * as THREE from "three";
-import { terrainHeight } from "./layout.js";
+import { terrainHeight, pathX, CLEARINGS } from "./layout.js";
 import { hash } from "./utils.js";
 
 export const FOG_COLOR = 0xebe9e2;
@@ -18,7 +18,9 @@ export function createTerrain({ mobile }) {
     pos.setY(i, terrainHeight(x, z));
     const n = 0.5 + 0.5 * Math.sin(x * 0.031 + z * 0.017) * Math.cos(z * 0.027 - x * 0.012);
     c.copy(ivory).lerp(sage, 0.15 + 0.6 * n);
-    c.lerp(warm, Math.exp(-(x * x) / 14) * 0.7);                      // the pale trail you walk along
+    const dp = x - pathX(z);
+    c.lerp(warm, Math.exp(-(dp * dp) / 14) * 0.7);                    // the pale trail you walk along
+    for (const cl of CLEARINGS) c.lerp(warm, Math.exp(-((x - cl.x) ** 2 + (z - cl.z) ** 2) / (cl.r * cl.r * 0.9)) * 0.55);   // open clearings glow a little
     c.multiplyScalar(0.96 + 0.06 * hash(i, 3));
     colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
   }
