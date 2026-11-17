@@ -4,49 +4,76 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Keyi's Garden</title>
-<link rel="stylesheet" href="style.css?v=20261008a">
+<meta name="description" content="A garden grown from 100 everyday observations: one flower, one frame, one day.">
+<link rel="stylesheet" href="style.css?v=202611171827">
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js?v=187",
+    "./vendor/three.core.js": "./vendor/three.core.js?v=187",
+    "./src/utils.js": "./src/utils.js?v=202611171827",
+    "./src/layout.js": "./src/layout.js?v=202611171827",
+    "./src/Terrain.js": "./src/Terrain.js?v=202611171827",
+    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611171827",
+    "./src/Flower.js": "./src/Flower.js?v=202611171827",
+    "./src/FlowerField.js": "./src/FlowerField.js?v=202611171827",
+    "./src/CameraController.js": "./src/CameraController.js?v=202611171827",
+    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611171827",
+    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611171827",
+    "./src/GardenScene.js": "./src/GardenScene.js?v=202611171827"
+  }
+}
+</script>
 </head>
 <body>
-<canvas id="scene"></canvas>
-<div class="grain"></div>
-<div class="vignette"></div>
+<canvas id="gl" aria-label="A 3D garden of 100 flowers, one for each day"></canvas>
+<div class="veil" aria-hidden="true"></div>
 
-<header class="hud-title">
+<header class="title">
   <h1>Keyi's Garden</h1>
-  <p id="count" hidden></p><!-- kept so older cached scripts do not crash -->
+  <p>100 days of frames</p>
 </header>
+<p class="nowday" id="nowday" aria-live="polite"></p>
 
-<div class="intro" id="intro">
-  <p>Move your mouse to wander the garden</p>
-  <p class="sub">Walk close and a flower wakes. Click it to see that day.</p>
+<p class="hint" id="hint">Scroll to walk deeper &middot; hover a flower &middot; click to enter a day</p>
+
+<nav class="timeline" id="timeline" aria-label="The 100 days">
+  <span class="tl-start"></span>
+  <div class="tl-track">
+    <span class="tl-marker"><b class="tl-now"></b></span>
+  </div>
+  <span class="tl-end"></span>
+</nav>
+
+<div class="tag" id="tag" aria-hidden="true">
+  <div class="t-day"></div>
+  <div class="t-date"></div>
+  <div class="t-title"></div>
 </div>
 
-<div class="tip" id="tip"></div>
-<div class="cursor" id="cursor"></div>
-
-<nav class="ticks" id="ticks" aria-label="100 days"></nav>
-
-<div class="modal" id="modal" aria-hidden="true">
-  <div class="backdrop" data-close></div>
-  <article class="card" role="dialog" aria-modal="true">
-    <button class="close" data-close aria-label="Close">×</button>
-    <div class="pair">
-      <figure class="sketch"><img id="m-sketch" alt="Sketch"><figcaption>Sketch</figcaption></figure>
-      <figure class="photo"><img id="m-photo" alt="Photo"><figcaption>Reality</figcaption></figure>
-    </div>
-    <div class="meta">
-      <span class="day" id="m-day"></span>
-      <h2 id="m-title"></h2>
-      <p id="m-caption"></p>
-    </div>
-    <div class="nav">
-      <button id="m-prev" aria-label="Previous">‹</button>
-      <button id="m-next" aria-label="Next">›</button>
+<section class="day" id="day" aria-hidden="true">
+  <div class="day-scrim" data-close></div>
+  <article class="panel" role="dialog" aria-labelledby="d-day">
+    <button class="back" data-close><span>&larr;</span> Back to the garden</button>
+    <p class="d-eyebrow" id="d-day"></p>
+    <p class="d-date" id="d-date"></p>
+    <figure class="d-photo"><img id="d-photo" alt=""></figure>
+    <h2 class="d-title" id="d-title"></h2>
+    <p class="d-note" id="d-note"></p>
+    <div class="d-foot">
+      <figure class="d-sketch"><img id="d-sketch" alt="The sketch for this day"><figcaption>The sketch</figcaption></figure>
+      <nav class="d-nav">
+        <button id="d-prev" aria-label="Previous day"><span>&larr;</span> Previous</button>
+        <button id="d-next" aria-label="Next day">Next <span>&rarr;</span></button>
+      </nav>
     </div>
   </article>
-</div>
+</section>
 
-<script src="data.js?v=20261007b"></script>
-<script src="garden.js?v=20261008a"></script>
+<div class="nogl" id="nogl"><p></p></div>
+
+<script src="data.js?v=202611171827"></script>
+<script src="config.js?v=202611171827"></script>
+<script type="module" src="./src/main.js?v=202611171827"></script>
 </body>
 </html>

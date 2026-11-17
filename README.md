@@ -1,19 +1,38 @@
-# Keyi's Garden
+# Keyi's Garden — 100 days of frames (3D)
 
-One photo + one sketch per day, grown into a flower. Your mouse is a little visitor: move it to walk around, get close and a flower wakes up, click it to see the sketch, the photo and a one-line note.
+A walkable 3D garden: every day is one flower, and its head carries that day's picture. Time becomes space —
+day 1 stands at the entrance, day 100 in the deepest part, and the garden grows denser the further you go.
+Days that have not happened yet are pale silhouettes waiting to be filled in.
 
-Open `index.html` directly (plain static site, no build step).
-
-## Adding a day
-
-1. Put the sketch and the photo in `assets/` (long side ≤ 1200px, webp/jpg). Sketches are best as black lines on a transparent background; white backgrounds work too.
-2. Add an entry to `entries` in `data.js`:
-
-```js
-{ day: 3, title: "Title", sketch: "assets/day03-sketch.webp", photo: "assets/day03-photo.webp", caption: "One sentence" }
-```
+Static site, no build step. Serve the folder (`python3 -m http.server`) and open `index.html`
+(ES modules need http, not `file://`).
 
 ## Controls
-- Move the mouse: the visitor follows; near the left/right edge the garden scrolls (wheel or ←/→ also work)
-- Click a flower: open details (←/→ switch between open flowers, Esc closes)
-- Bottom ticks: the 100 days, click to jump
+- **Scroll / ↑ ↓ / swipe**: walk deeper or back (slow, eased). Mouse only tilts the view a little; drag turns your head.
+- **Hover** a flower: it wakes (turns to you, brightens, glows) and shows the day and date.
+- **Click / tap**: the camera flies to the flower and the day opens (photo, date, note, sketch, previous / next).
+  Esc or "Back to the garden" returns you to where you were. Each day has a link: `#day-27`.
+- **Timeline** (bottom): Day 01 ——— Day 100. Lit ticks are the days in view; click one to walk there.
+
+## Code map (`src/`)
+| file | job |
+|---|---|
+| `main.js` | boots the scene, WebGL fallback |
+| `GardenScene.js` | assembles everything, hover / click, UI wiring, adaptive resolution |
+| `layout.js` | where each day lives (time → depth), terrain height |
+| `FlowerField.js` | maps the day data onto `Flower`s, instanced stems / leaves / shadows / seedlings, lazy texture loading |
+| `Flower.js` | one flower: stem, leaves, round picture head, hover animation |
+| `CameraController.js` | scroll walking, parallax, drag, fly-to-flower |
+| `Terrain.js`, `Atmosphere.js` | ground, hills, sky, light, fog, grass, floating motes |
+| `DayOverlay.js`, `ProgressIndicator.js` | the day panel and the timeline (HTML, outside the 3D scene) |
+
+Three.js r187 is vendored in `vendor/` (MIT, no npm needed).
+
+## Adding days
+1. Put the sketch and photo in the upload folder as `<n>s Large.jpeg` and `<n>p Large.jpeg`.
+2. `python3 tools/build_garden.py "S for Sketches；P for Photos"` makes the web-sized photo, the transparent sketch
+   and the round flower-head texture (`assets/heads/`), and rewrites `data.js`. Existing outputs are kept (`--rebuild` redoes all).
+3. Titles / notes: `captions.json` → `{"27": {"title": "...", "caption": "..."}}`, then run the script again.
+4. `python3 tools/bump_version.py` before pushing, so browsers fetch the new files.
+
+Settings (title, `startDate` that dates every day) are in `config.js`.
