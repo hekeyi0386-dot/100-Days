@@ -32,14 +32,14 @@ void main(){
   // the head is a circle; opened, it is a square the size of the sketch. In between, the corners grow out of the circle (and, closing, fall back into it)
   vec2 cw = max(q - (1.0 - 0.06), 0.0);
   float sd = mix(r - 1.0, length(cw) - 0.06, uOpen);
-  float disc = 1.0 - smoothstep(-0.018, 0.0, sd);                       // a clean edge
+  float disc = 1.0 - smoothstep(-0.012, 0.0, sd);                       // a clean edge
   if (disc < 0.01) discard;
   vec3 paper = mix(uPaper, uPaperWarm, uVisit * 0.8);
   paper = mix(paper, uPaperHot, uHot);
-  vec4 ink = texture2D(uInk, vUv);
+  vec4 ink = texture2D(uInk, vUv, -0.6);
   vec3 sketch = mix(paper, ink.rgb, ink.a * uInkIn * (0.9 + 0.1 * uHot));
-  vec4 pic = texture2D(uColor, vUv);
-  float fe = clamp((1.0 - r) / 0.30, 0.0, 1.0); fe = fe * fe * (3.0 - 2.0 * fe);
+  vec4 pic = texture2D(uColor, vUv, -0.4);
+  float fe = clamp((1.0 - r) / 0.10, 0.0, 1.0); fe = fe * fe * (3.0 - 2.0 * fe);
   float rim = mix(smoothstep(0.0, 0.5, fe), 1.0, uOpen) * pic.a;        // the photograph is solid right out to a narrow, soft rim (and to the corners once it is a square)
   vec3 photo = mix(paper, pic.rgb * (1.0 + 0.04 * uHot), rim);
   gl_FragColor = vec4(mix(sketch, photo, uVisit), disc * uOpacity * mix(0.94, 1.0, uVisit));

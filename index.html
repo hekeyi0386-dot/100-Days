@@ -7,29 +7,29 @@
 <meta name="description" content="A garden grown from 100 everyday observations: one flower, one frame, one day.">
 <link rel="preload" href="fonts/MysteryQuest-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="fonts/ComicNeue-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="style.css?v=202611182036">
+<link rel="stylesheet" href="style.css?v=202611182221">
 <script type="importmap">
 {
   "imports": {
     "three": "./vendor/three.module.js?v=187",
     "./vendor/three.core.js": "./vendor/three.core.js?v=187",
-    "./src/utils.js": "./src/utils.js?v=202611182036",
-    "./src/layout.js": "./src/layout.js?v=202611182036",
-    "./src/Terrain.js": "./src/Terrain.js?v=202611182036",
-    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611182036",
-    "./src/Flower.js": "./src/Flower.js?v=202611182036",
-    "./src/FlowerField.js": "./src/FlowerField.js?v=202611182036",
-    "./src/CameraController.js": "./src/CameraController.js?v=202611182036",
-    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611182036",
-    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611182036",
-    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611182036",
-    "./src/Pollen.js": "./src/Pollen.js?v=202611182036",
-    "./src/Visits.js": "./src/Visits.js?v=202611182036",
-    "./src/Butterfly.js": "./src/Butterfly.js?v=202611182036",
-    "./src/Intro.js": "./src/Intro.js?v=202611182036",
-    "./src/Dust.js": "./src/Dust.js?v=202611182036",
-    "./src/Visitor.js": "./src/Visitor.js?v=202611182036",
-    "./src/GardenScene.js": "./src/GardenScene.js?v=202611182036"
+    "./src/utils.js": "./src/utils.js?v=202611182221",
+    "./src/layout.js": "./src/layout.js?v=202611182221",
+    "./src/Terrain.js": "./src/Terrain.js?v=202611182221",
+    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611182221",
+    "./src/Flower.js": "./src/Flower.js?v=202611182221",
+    "./src/FlowerField.js": "./src/FlowerField.js?v=202611182221",
+    "./src/CameraController.js": "./src/CameraController.js?v=202611182221",
+    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611182221",
+    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611182221",
+    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611182221",
+    "./src/Pollen.js": "./src/Pollen.js?v=202611182221",
+    "./src/Visits.js": "./src/Visits.js?v=202611182221",
+    "./src/Butterfly.js": "./src/Butterfly.js?v=202611182221",
+    "./src/Intro.js": "./src/Intro.js?v=202611182221",
+    "./src/Dust.js": "./src/Dust.js?v=202611182221",
+    "./src/Visitor.js": "./src/Visitor.js?v=202611182221",
+    "./src/GardenScene.js": "./src/GardenScene.js?v=202611182221"
   }
 }
 </script>
@@ -44,10 +44,6 @@
 </header>
 <p class="nowday" id="nowday" aria-live="polite"></p>
 <p class="awake" id="awake" hidden><span id="awake-n"></span></p>
-<nav class="exits" id="exits" aria-label="Garden">
-  <button type="button" id="go-home" title="Back to the beginning, keeping the flowers you have woken">Home</button>
-  <button type="button" id="go-reset" class="quiet" title="Start the whole garden again">Reset Garden</button>
-</nav>
 <div class="confirm" id="confirm" hidden>
   <div class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-q">
     <p id="confirm-q">Reset the garden and wake all flowers from the beginning?</p>
@@ -64,6 +60,11 @@
   <button data-view="walk" title="Walk through the garden (1)">Explore</button>
   <button data-view="overview" title="Stand on the hill (2)">Overview</button>
   <button data-view="top" title="See all 100 days from above (3)">Bird&rsquo;s eye</button>
+</nav>
+<nav class="views exits" id="exits" aria-label="Garden">
+  <button type="button" class="exit" id="go-home" title="Back to the beginning, keeping the flowers you have woken">Home</button>
+  <span class="views-sep" aria-hidden="true"></span>
+  <button type="button" class="exit quiet" id="go-reset" title="Start the whole garden again">Reset Garden</button>
 </nav>
 
 <nav class="timeline" id="timeline" aria-label="The 100 days">
@@ -107,11 +108,11 @@
     <h1 id="intro-title">You are a butterfly,<br><em>entering my garden.</em></h1>
     <p class="intro-lede">Every flower holds one frame from one of my days &mdash; a small moment I almost walked past.</p>
     <p class="intro-lede">Drift slowly. Rest on the ones that call to you,<br>and wherever you land, the garden wakes in colour.</p>
+    <p class="intro-guide"><span class="g-desk">Drag to move left/right, scroll to move front/back, click to wake it.</span><span class="g-touch">Drag to move left/right, pinch to move front/back, tap to wake it.</span></p>
     <button id="enter" class="intro-cta" type="button"><span>Fly into the Garden</span></button>
     <div class="intro-alt" id="intro-alt">
       <button type="button" class="alt-toggle" id="alt-toggle" aria-expanded="false" aria-controls="alt-panel">Not comfortable with butterflies?</button>
       <div class="alt-stack">
-        <p class="intro-note">Drag to move left/right, scroll to move front/back, click to wake it.</p>
         <div class="alt-panel" id="alt-panel" aria-hidden="true">
           <p>You can drift through the garden as a tiny speck of dust instead.</p>
           <button type="button" class="alt-go" id="enter-dust" tabindex="-1">Explore as Dust</button>
@@ -123,8 +124,8 @@
 
 <div class="nogl" id="nogl"><p></p></div>
 
-<script src="data.js?v=202611182036"></script>
-<script src="config.js?v=202611182036"></script>
-<script type="module" src="./src/main.js?v=202611182036"></script>
+<script src="data.js?v=202611182221"></script>
+<script src="config.js?v=202611182221"></script>
+<script type="module" src="./src/main.js?v=202611182221"></script>
 </body>
 </html>

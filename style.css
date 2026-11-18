@@ -54,7 +54,7 @@ body.focusing .timeline{opacity:0;pointer-events:none}
 .views{position:fixed;left:clamp(18px,2.8vw,40px);bottom:clamp(18px,3.2vh,32px);display:flex;gap:2px;padding:4px;border-radius:99px;
   background:rgba(251,249,243,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   box-shadow:0 6px 24px rgba(80,84,70,.10),inset 0 0 0 1px rgba(255,255,255,.6);transition:opacity .5s}
-body.focusing .views{opacity:0;pointer-events:none}
+body.focusing .views,body.focusing .exits{opacity:0;pointer-events:none}
 .views button{all:unset;cursor:pointer;white-space:nowrap;padding:7px 13px 6px;border-radius:99px;font-size:13px;letter-spacing:.03em;
   color:var(--ink-soft);transition:color .3s,background .4s}
 .views button:hover{color:var(--ink)}
@@ -193,7 +193,7 @@ body.focusing .awake{opacity:0;pointer-events:none}
 
 /* the garden's own interface waits until the butterfly has flown in */
 .title,.nowday,.hint,.timeline,.views,.awake{transition:opacity 1.6s ease .5s}
-body.intro-open .title,body.intro-open .nowday,body.intro-open .hint,body.intro-open .timeline,body.intro-open .views,body.intro-open .awake{opacity:0;pointer-events:none;transition-delay:0s}
+body.intro-open .title,body.intro-open .nowday,body.intro-open .hint,body.intro-open .timeline,body.intro-open .views,body.intro-open .exits,body.intro-open .awake{opacity:0;pointer-events:none;transition-delay:0s}
 @media (max-width:760px){.intro-note{display:none}.intro-bf.main{width:76px}}
 @media (prefers-reduced-motion:reduce){.intro-card>*,.intro-bf,.intro-dust i,.wing{animation:none!important}}
 
@@ -298,13 +298,7 @@ body.detail-fixed .d-sketch img{height:100%;max-height:none}
 .back:focus-visible,.d-nav button:focus-visible{outline:none}
 @media (prefers-reduced-motion:reduce){.back,.d-nav button,.back::before,.d-nav button::before{transition:none}}
 
-/* ---------- leaving the garden: Home (keeps the journey) and Reset Garden (erases it) ---------- */
-.exits{position:fixed;right:clamp(18px,2.8vw,40px);bottom:clamp(26px,4.2vh,42px);display:flex;gap:16px;align-items:baseline;font-size:13px;letter-spacing:.03em;transition:opacity 1.6s ease .5s}
-.exits button{all:unset;cursor:pointer;position:relative;padding:2px 6px;border-radius:99px;color:var(--ink-soft);transition:color .3s,text-shadow .3s}
-.exits button.quiet{opacity:.62;font-size:12px}
-.exits button:hover,.exits button:focus-visible{color:var(--ink);opacity:1;text-shadow:0 0 12px rgba(255,214,112,.55)}
-.exits button.quiet:hover{color:#8a6a55}
-body.intro-open .exits,body.focusing .exits{opacity:0;pointer-events:none;transition-delay:0s}
+/* ---------- leaving the garden: Home (keeps the journey) and Reset Garden (erases it) live in the view pill ---------- */
 .confirm{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(236,236,228,.38);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:confirmIn .3s ease both}
 .confirm[hidden]{display:none}
 .confirm-card{max-width:340px;margin:20px;padding:26px 28px 20px;border-radius:22px;background:rgba(250,249,243,.96);text-align:center;box-shadow:0 18px 60px rgba(70,72,60,.18),inset 0 0 0 1px rgba(255,255,255,.7)}
@@ -314,4 +308,41 @@ body.intro-open .exits,body.focusing .exits{opacity:0;pointer-events:none;transi
 .confirm-row button:hover,.confirm-row button:focus-visible{color:var(--ink);background:rgba(255,226,138,.35);box-shadow:0 0 14px rgba(255,214,112,.45)}
 .confirm-row .ok{background:rgba(43,47,60,.07)}
 @keyframes confirmIn{from{opacity:0}to{opacity:1}}
-@media (max-width:700px){.exits{bottom:78px;gap:8px;font-size:12px}.exits button.quiet{font-size:11px}}
+
+.views-sep{align-self:center;width:1px;height:16px;margin:0 6px;background:rgba(43,47,60,.18)}
+.views button.exit{color:#5a5e6e}
+.views button.exit.quiet{color:#8a6a58}
+.views button.exit:hover,.views button.exit:focus-visible{color:var(--ink);text-shadow:0 0 12px rgba(255,208,70,.75)}
+.views button.exit.quiet:hover{color:#6e4a38}
+@media (max-width:760px){.views{width:max-content;max-width:calc(100vw - 16px)}.views button{padding:6px 10px 5px}}
+
+/* ---------- the detail view: one composed section (colour square + panel), level and centred ---------- */
+body.detail-fixed .panel{top:var(--panel-top);transform:translate(26px,0)}
+body.detail-fixed .day.open .panel{transform:none}
+body.detail-fixed .panel{max-height:calc(100vh - var(--panel-top) - 12px)}
+
+/* hover: the words themselves glow (an aura on the letters, no block behind them) */
+.back::before,.d-nav button::before{display:none}
+.back,.d-nav button{transition:color .3s ease,transform .4s cubic-bezier(.2,.8,.2,1),text-shadow .4s ease}
+.back:hover,.d-nav button:not([disabled]):hover,.back:focus-visible,.d-nav button:not([disabled]):focus-visible{
+  color:#2b2410;transform:scale(1.04);
+  text-shadow:0 0 1px rgba(255,200,40,.95),0 0 6px rgba(255,214,60,.95),0 0 14px rgba(255,208,50,.8),0 0 28px rgba(255,200,40,.55)}
+.back:hover svg,.d-nav button:hover svg{filter:drop-shadow(0 0 5px rgba(255,208,50,.9))}
+
+/* the guiding line on the way in: above the button, larger, in a warm brown */
+.intro-guide{margin:26px auto 0;max-width:28em;font-size:clamp(17px,1.55vw,20px);line-height:1.5;letter-spacing:.015em;color:#8a5a2b;text-shadow:0 0 14px rgba(255,248,226,.9);animation:rise 1.2s cubic-bezier(.2,.7,.2,1) .2s both}
+.intro-guide .g-touch{display:none}
+@media (pointer:coarse),(max-width:760px){.intro-guide .g-desk{display:none}.intro-guide .g-touch{display:inline}}
+.intro-guide + .intro-cta{margin-top:18px}
+
+/* idle / guidance hint: bigger, darker, higher, on its own soft plate so nothing can swallow it */
+.hint{bottom:clamp(86px,13vh,120px);font-size:clamp(17px,1.5vw,20px);color:#7a5230;opacity:1;padding:10px 22px 9px;border-radius:99px;
+  background:rgba(251,249,243,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 22px rgba(80,84,70,.10),inset 0 0 0 1px rgba(255,255,255,.7);text-shadow:none;z-index:22}
+.hint.gone{opacity:0}
+@media (max-width:760px){.hint{bottom:96px;font-size:16px;padding:9px 16px 8px;border-radius:22px}}
+
+.exits{bottom:calc(clamp(18px,3.2vh,32px) + 50px)}
+@media (max-width:760px){.exits{left:50%;transform:translateX(-50%);bottom:auto;top:calc(clamp(16px,2.8vh,30px) + 62px + 44px)}}
+.intro-guide{max-width:36em;text-wrap:balance}
+
+.hint{text-wrap:balance}

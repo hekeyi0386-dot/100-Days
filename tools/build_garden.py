@@ -49,7 +49,7 @@ def flower_head(ink, size=384):
     im = im.crop(((w - m) // 2, (h - m) // 2, (w - m) // 2 + m, (h - m) // 2 + m)).resize((size, size), Image.LANCZOS)
     yy, xx = np.mgrid[0:size, 0:size]
     r = np.hypot(xx - (size - 1) / 2, yy - (size - 1) / 2) / (size / 2)
-    feather = np.clip((1.0 - r) / 0.34, 0, 1)            # solid inside 0.66R, fades to nothing at R
+    feather = np.clip((1.0 - r) / 0.09, 0, 1)            # solid out to 0.91R, a clean thin edge (the bird's eye must be crisp)
     feather = feather * feather * (3 - 2 * feather)
     a = np.asarray(im.getchannel("A"), dtype=np.float32) * feather
     out = im.copy(); out.putalpha(Image.fromarray(a.astype(np.uint8)))

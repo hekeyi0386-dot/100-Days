@@ -86,3 +86,7 @@ Settings (title, `startDate` that dates every day) are in `config.js`.
 ## Home and Reset Garden
 
 Small links bottom-right. **Home** brings the intro back (no reload; visited flowers stay in colour, because they live in `Visits` in memory for the page's lifetime). **Reset Garden** (after a soft confirmation) clears `Visits`, puts every flower back to sleep, resets the camera, then shows the intro.
+
+## Detail view layout (current)
+
+`layoutDetail()` in `GardenScene.js` sizes one composed section: the colour square and the sketch tile are the same size and level (the camera aims so the square's centre lands on the tile's centre line), a 40 px gap apart, and the pair is centred on the screen. Home / Reset Garden sit in a small pill above the Explore / Overview / Bird's eye pill. Flower heads use a thin feathered edge (`flower_head` in `tools/build_garden.py`) so the bird's eye stays crisp.

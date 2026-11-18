@@ -256,10 +256,11 @@ export class CameraController {
     const fwd = new THREE.Vector3(Math.sin(yaw0), 0, Math.cos(yaw0)), right = new THREE.Vector3(Math.cos(yaw0), 0, -Math.sin(yaw0));
     const D = this.detail;
     if (D && D.desktop) {
-      const tanHalf = Math.tan(rad(this.fovBase / 2)), cx = D.panelLeft / 2, nx = (2 * cx) / D.W - 1;            // nx < 0: left of centre
+      const tanHalf = Math.tan(rad(this.fovBase / 2)), nx = (2 * D.cx) / D.W - 1, ny = 1 - (2 * D.cy) / D.H;      // where the square sits on screen (nx < 0: left of centre, ny: up is +)
       const tanPhi = -nx * tanHalf * this.aspect, cosPhi = 1 / Math.sqrt(1 + tanPhi * tanPhi);
       const d = (1.17 * R * (D.H / 2)) / ((D.sk / 2) * cosPhi * tanHalf);                                        // 1.17 R = the awake head's half size
-      return { pos: hp.clone().addScaledVector(fwd, d), look: hp.clone().addScaledVector(right, tanPhi * d), fov: this.fovBase };
+      const look = hp.clone().addScaledVector(right, tanPhi * d); look.y -= ny * d * tanHalf / cosPhi;              // aim a little off the head so it lands level with the sketch
+      return { pos: hp.clone().addScaledVector(fwd, d), look, fov: this.fovBase };
     }
     const d = R * 6.4, pos = hp.clone().addScaledVector(fwd, d); pos.y += R * 0.1;
     return { pos, look: hp.clone().add(new THREE.Vector3(0, -R * 2.5, 0)), fov: this.fovBase };

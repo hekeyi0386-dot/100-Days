@@ -319,11 +319,15 @@ export class GardenScene {
    * the flower on the left is made exactly that big (CameraController.poseFor), so the photograph and the sketch are twins. */
   layoutDetail() {
     const W = innerWidth, H = innerHeight, desktop = W > 760, root = document.documentElement.style;
-    const panelW = Math.min(556, 0.47 * W), right = clamp(0.03 * W, 14, 48) + 24, panelLeft = W - right - panelW;
-    const sk = Math.max(240, Math.min(panelW - 52, 0.56 * H, 520, panelLeft - 56));
-    root.setProperty("--panel-w", panelW.toFixed(0) + "px"); root.setProperty("--panel-right", right.toFixed(0) + "px"); root.setProperty("--sk", sk.toFixed(0) + "px");
+    // One composed section: the colour square and the sketch tile are the same size, level with each other, a small gap apart,
+    // and the pair (square + panel) is centred on the screen as a whole.
+    const GAP = 40, ABOVE = 126, BELOW = 215;                              // panel content above the sketch tile / below it (title, note, nav)
+    const sk = Math.round(Math.max(240, Math.min(0.6 * H, H - ABOVE - BELOW - 30, (0.94 * W - 52 - GAP) / 2, 580)));
+    const panelW = sk + 52, total = sk + GAP + panelW, m = (W - total) / 2, panelLeft = m + sk + GAP;
+    const ys = (H + ABOVE - BELOW) / 2, panelTop = ys - ABOVE - sk / 2;      // the sketch tile's centre line, which the photograph shares
+    root.setProperty("--panel-w", panelW + "px"); root.setProperty("--panel-right", m.toFixed(0) + "px"); root.setProperty("--sk", sk + "px"); root.setProperty("--panel-top", Math.max(10, panelTop).toFixed(0) + "px");
     document.body.classList.toggle("detail-fixed", desktop);
-    this.controller.detail = desktop ? { desktop: true, W, H, panelLeft, sk } : null;
+    this.controller.detail = desktop ? { desktop: true, W, H, panelLeft, sk, cx: m + sk / 2, cy: ys } : null;
   }
 
   resize() {

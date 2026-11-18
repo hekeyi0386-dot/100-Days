@@ -5,7 +5,7 @@ export const VIEW_LABELS = { walk: "Explore", overview: "Overview", top: "Birdâ€
 export class ViewSwitcher {
   constructor(onPick) {
     this.root = document.querySelector("#views");
-    this.buttons = [...this.root.querySelectorAll("button")];
+    this.buttons = [...this.root.querySelectorAll("button[data-view]")];
     this.buttons.forEach((b) => b.addEventListener("click", () => onPick(b.dataset.view)));
     addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;

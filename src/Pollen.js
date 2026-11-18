@@ -16,7 +16,7 @@ export class Pollen {
     geo.setAttribute("aTone", new THREE.BufferAttribute(this.tone, 1));
     this.material = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false,
-      uniforms: { uScale: { value: 900 }, uDpr: { value: 1 }, uWarm: { value: new THREE.Color(0xe2b650) }, uPale: { value: new THREE.Color(0xf1dd9f) } },
+      uniforms: { uScale: { value: 900 }, uDpr: { value: 1 }, uWarm: { value: new THREE.Color(0xffd21f) }, uPale: { value: new THREE.Color(0xfff07a) } },
       // a grain is 2-4.5 CSS pixels wide however far away, a flat colour with a clean edge (no halo, no gradient)
       vertexShader: `attribute float aSize; attribute float aAlpha; attribute float aTone; varying float vA; varying float vT; uniform float uScale; uniform float uDpr;
         void main(){ vA = aAlpha; vT = aTone; vec4 mv = modelViewMatrix * vec4(position, 1.0);
