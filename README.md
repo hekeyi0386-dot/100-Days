@@ -16,11 +16,11 @@ You are a butterfly entering the garden. Every flower holds one day; where you l
   sunflower-like clusters) along one winding path, joined by faint threads like a star map. Day 1 is on the left, day 100 on the right.
 - **Your cursor is a butterfly** (mouse only). It flutters after the pointer, beats its wings faster while travelling, and lands on the
   flower you hover; the flower answers with a ring of light and a little pollen.
-- **Click a flower to land on it.** The camera descends, the day opens, and the flower's head blooms from the black-and-white sketch into
-  the colour photograph, its stem and leaves turning green. It stays that way: awakened flowers are remembered in `localStorage`
+- **Click a flower to land on it.** The camera descends and the day opens in two halves: on the left the flower itself, its head turned into the
+  full-colour photograph (solid, not translucent, drawn above everything else, with the flowers that stood in front of it faded away); on the right
+  the day's sketch as the panel's main picture, with the date, the note and previous / next. The flower stays awake in colour afterwards: it is remembered in `localStorage`
   (`keyis-garden:visited:v1`), counted top right ("3 of 44 flowers awake"), and lit gold on the timeline. "reset" (hover the counter) lets the garden sleep again.
-
-## Three ways of looking (bottom-left, or keys 1 / 2 / 3)
+  There is no pollen after a click; only hovering stirs a little.
 - **Bird's eye** *(the way in)* – high above, slightly tilted, the whole field at once; every picture face-up. Days still to come are pale hollow silhouettes.
   It is a real place to explore: **scroll / pinch** draws nearer or further (anchored to the pointer, bounded: never so near the composition
   breaks, never so far it is unreadable), **drag / two-finger swipe / arrow keys / Shift+scroll** drift across the field (bounded too).

@@ -38,8 +38,7 @@ export class FlowerField {
     const glowTex = radialTexture([[0, "rgba(255,244,205,1)"], [0.35, "rgba(255,236,176,.55)"], [1, "rgba(255,236,176,0)"]]);
     const ringTex = radialTexture([[0, "rgba(255,236,176,0)"], [0.55, "rgba(255,232,160,.0)"], [0.7, "rgba(255,226,140,.95)"], [0.76, "rgba(255,226,140,.5)"], [1, "rgba(255,236,176,0)"]]);
     const shared = this.shared = {
-      discGeo: new THREE.CircleGeometry(1, 48), inkGeo: new THREE.PlaneGeometry(2, 2), glowGeo: new THREE.PlaneGeometry(1, 1),
-      discMat: new THREE.MeshBasicMaterial({ color: 0xe6e2d5, transparent: true, opacity: 0.93, depthWrite: false }),
+      inkGeo: new THREE.PlaneGeometry(2, 2), glowGeo: new THREE.PlaneGeometry(1, 1),
       glowTex, ringTex,
       glowMat: new THREE.MeshBasicMaterial({ map: glowTex, color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }),
       ghostGeo: new THREE.PlaneGeometry(2, 2),
@@ -136,7 +135,7 @@ export class FlowerField {
       if (d < reach) f.nudge(0.2 * (1 - d / reach), dirX, dirZ);
     }
   }
-  setFocus(flower) { this.focused = flower; this.refreshStates(); }
+  setFocus(flower) { this.focused = flower; if (flower) flower.dim = 1; this.refreshStates(); }   // never inherit the dimming it had as somebody's neighbour
   refreshStates() {
     const lead = this.focused || this.hovered;
     for (const f of this.flowers) {
@@ -156,6 +155,17 @@ export class FlowerField {
 
   update(t, dt, cam) {
     this.wind = 0.6 + 0.4 * Math.sin(t * 0.23);
+    // while one day is open, the flowers standing between the camera and it step out of the way (a faint head that close would hang
+    // over the picture like a veil); the ones behind it simply stay quiet
+    const lead = this.focused;
+    if (lead) {
+      const dl = lead.headPos.distanceTo(cam.position);
+      for (const f of this.flowers) {
+        if (f === lead || !f.hasImage) continue;
+        const inFront = dl < 30 && f.headPos.distanceTo(cam.position) < dl + 0.5 && f.headPos.distanceTo(lead.headPos) < 14;
+        f.dimTarget = inFront ? 0 : (f.headPos.distanceTo(lead.headPos) < 14 ? 0.25 : 1);
+      }
+    }
     for (const f of this.flowers) f.update(t, dt, cam.position, this.wind, this);
     this.stems.instanceMatrix.needsUpdate = true; this.leaves.instanceMatrix.needsUpdate = true;
     if (this.tintDirty) { this.stems.instanceColor.needsUpdate = true; this.leaves.instanceColor.needsUpdate = true; this.tintDirty = false; }

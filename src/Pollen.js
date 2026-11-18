@@ -40,6 +40,9 @@ export class Pollen {
     }
   }
 
+  /* everything in the air is gone at once (opening a day should feel clean and calm) */
+  clear() { this.age.fill(99); this.alpha.fill(0); this.geo.attributes.aAlpha.needsUpdate = true; }
+
   update(dt, camera, viewportH) {
     this.material.uniforms.uScale.value = viewportH / (2 * Math.tan((camera.fov * Math.PI) / 360));
     for (let i = 0; i < MAX; i++) {

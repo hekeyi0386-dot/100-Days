@@ -158,7 +158,10 @@ export class GardenScene {
     const f = this.field.byDay.get(day); if (!f || !f.hasImage) return;
     const first = !this.current;
     this.current = f; document.body.classList.add("focusing");
-    f.loadColor(this.field.loader, this.field.anisotropy);                    // so its colour is ready by the time we arrive
+    this.pollen.clear();                                                     // no pollen once a day is opened
+    this.field.awaken(f); this.updateAwake();                                // it turns to colour as we descend, and stays that way
+    const at = this.filled.indexOf(day);
+    for (const d of [this.filled[at - 1], this.filled[at + 1]]) { const n = d && this.field.byDay.get(d); if (n) n.loadColor(this.field.loader, this.field.anisotropy); }   // so going to the next / previous day is clean
     this.field.setHover(null); this.field.setFocus(f); this.hideTag();
     this.controller.focusOn(f, first ? 0 : 1.3);
     const idx = this.filled.indexOf(day);
@@ -244,12 +247,6 @@ export class GardenScene {
 
   enterGarden() { this.controller.enter(); this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle(); }
 
-  // the butterfly has landed and the visitor is looking: the flower wakes into colour, and stays that way
-  awakenNow(f) {
-    if (!this.field.awaken(f)) return;
-    this.pollen.burst(f.headPos, f.R * 1.15, 42, 1.3); this.updateAwake();
-  }
-
   updateAwake() {
     const n = [...this.visits.set].filter((d) => this.field.byDay.get(d) && this.field.byDay.get(d).hasImage).length;
     const el = document.querySelector("#awake"); el.hidden = n === 0;
@@ -285,7 +282,6 @@ export class GardenScene {
     const now = performance.now(), dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; this.t += dt;
     if (this.intro.open) this.controller.pan.set(Math.sin(this.t * 0.09) * 9, Math.cos(this.t * 0.07) * 3);   // the prelude's backdrop drifts very slowly
     this.controller.update(dt);
-    if (this.current && this.controller.mode === "focus" && !this.current.visited) this.awakenNow(this.current);
     this.field.faceUp = this.controller.faceUp; this.field.topYaw = this.controller.portrait ? 0 : Math.PI / 2; this.field.topPitch = this.controller.pitch; this.field.loadAll = this.controller.v > 0.5;
     this.field.update(this.t, dt, this.camera);
     this.updateFog();

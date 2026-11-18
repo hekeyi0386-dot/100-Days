@@ -1,6 +1,6 @@
 /* One day = one flower: a thin stem, two leaves and a round head carrying that day's picture.
  * Stems and leaves are drawn by FlowerField as instanced meshes (one draw call each for all days);
- * the head is a tiny group (glow + paper disc + ink picture) so it can be hovered and textured on its own. */
+ * the head is a tiny group (a soft glow + one face mesh that blends paper, sketch and photograph) so it can be hovered and textured on its own. */
 import * as THREE from "three";
 import { clamp, damp, lerp } from "./utils.js";
 
@@ -9,6 +9,50 @@ const _q = new THREE.Quaternion(), _qa = new THREE.Quaternion(), _qb = new THREE
 const _e = new THREE.Euler(), _v = new THREE.Vector3(), _m = new THREE.Matrix4(), _s = new THREE.Vector3(), _c = new THREE.Color();
 const PAPER = new THREE.Color(0xe6e2d5), PAPER_HOT = new THREE.Color(0xfffcf2), PAPER_WARM = new THREE.Color(0xf8efd8);
 const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+
+/* A flower head is ONE draw: paper, the ink sketch and the colour photograph are blended inside a single fragment shader.
+ * The sketch "dissolves" into the photograph as a change of colour, while the head's own opacity stays put: no stack of
+ * half-transparent layers, so nothing can look washed out or ghosted halfway through (or be left that way afterwards). */
+const HEAD_VERT = `varying vec2 vUv;
+#include <fog_pars_vertex>
+void main(){
+  vUv = uv;
+  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+  gl_Position = projectionMatrix * mvPosition;
+#include <fog_vertex>
+}`;
+const HEAD_FRAG = `uniform sampler2D uInk; uniform sampler2D uColor;
+uniform float uInkIn, uVisit, uHot, uOpacity;
+uniform vec3 uPaper, uPaperWarm, uPaperHot;
+varying vec2 vUv;
+#include <fog_pars_fragment>
+void main(){
+  float r = length(vUv * 2.0 - 1.0);
+  float disc = 1.0 - smoothstep(0.982, 1.0, r);                         // a clean round edge
+  if (disc < 0.01) discard;
+  vec3 paper = mix(uPaper, uPaperWarm, uVisit * 0.8);
+  paper = mix(paper, uPaperHot, uHot);
+  vec4 ink = texture2D(uInk, vUv);
+  vec3 sketch = mix(paper, ink.rgb, ink.a * uInkIn * (0.9 + 0.1 * uHot));
+  vec4 pic = texture2D(uColor, vUv);
+  float rim = smoothstep(0.0, 0.5, pic.a);                              // the photograph is solid right out to a narrow, soft rim
+  vec3 photo = mix(paper, pic.rgb * (1.0 + 0.04 * uHot), rim);
+  gl_FragColor = vec4(mix(sketch, photo, uVisit), disc * uOpacity * mix(0.94, 1.0, uVisit));
+#include <colorspace_fragment>
+#include <fog_fragment>
+}`;
+let BLANK = null;
+const blankTexture = () => BLANK || (BLANK = Object.assign(new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1), { needsUpdate: true }));
+function makeHeadMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
+      uInk: { value: blankTexture() }, uColor: { value: blankTexture() },
+      uInkIn: { value: 0 }, uVisit: { value: 0 }, uHot: { value: 0 }, uOpacity: { value: 1 },
+      uPaper: { value: PAPER }, uPaperWarm: { value: PAPER_WARM }, uPaperHot: { value: PAPER_HOT },
+    }]),
+    vertexShader: HEAD_VERT, fragmentShader: HEAD_FRAG, transparent: true, depthWrite: false, fog: true,
+  });
+}
 
 export class Flower {
   constructor(layout, entry, index, shared) {
@@ -24,16 +68,15 @@ export class Flower {
     // awakening: once visited the sketch gives way to the colour photograph
     // a butterfly's touch: a small tremble that dies away quickly (energy, and the direction it was brushed from)
     this.shake = 0; this.shakeX = 0; this.shakeZ = 1; this.tremble = 1.2 + Math.random();
-    this.visited = false; this.visitFade = 0; this.visitInstant = false; this.colorState = 0; this.colorMesh = null; this.visitApplied = -1;
+    this.visited = false; this.visitFade = 0; this.visitInstant = false; this.colorState = 0; this.visitApplied = -1;
 
     if (this.hasImage) {
       const g = this.head = new THREE.Group(); g.rotation.order = "YXZ";
       this.glow = new THREE.Mesh(shared.glowGeo, shared.glowMat.clone()); this.glow.position.z = -0.03; this.glow.scale.setScalar(4.4);
-      this.disc = new THREE.Mesh(shared.discGeo, shared.discMat.clone());
-      this.ink = new THREE.Mesh(shared.inkGeo, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
-      this.ink.position.z = 0.012;
-      g.add(this.glow, this.disc, this.ink);
-      this.hit = this.ink;
+      this.face = new THREE.Mesh(shared.inkGeo, makeHeadMaterial());
+      this.uni = this.face.material.uniforms; this.lead = false;
+      g.add(this.glow, this.face);
+      this.hit = this.face;
     } else {
       // a day that has not happened yet: a pale silhouette waiting to be filled in
       const g = this.head = new THREE.Group(); g.rotation.order = "YXZ";
@@ -49,7 +92,7 @@ export class Flower {
     this.textureState = 1;
     loader.load(this.entry.head, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = anisotropy;
-      this.ink.material.map = tex; this.ink.material.needsUpdate = true; this.textureState = 2;
+      this.uni.uInk.value = tex; this.textureState = 2;
     }, undefined, () => { this.textureState = 3; });
   }
 
@@ -59,8 +102,7 @@ export class Flower {
     this.colorState = 1;
     loader.load(this.entry.headColor, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = anisotropy;
-      this.colorMesh = new THREE.Mesh(this.shared.inkGeo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false }));
-      this.colorMesh.position.z = 0.016; this.head.add(this.colorMesh); this.colorState = 2;
+      this.uni.uColor.value = tex; this.colorState = 2;
     }, undefined, () => { this.colorState = 3; });
   }
 
@@ -78,7 +120,8 @@ export class Flower {
   update(t, dt, cam, wind, field) {
     const L = this.layout, { stems, leaves } = field;
     this.h = damp(this.h, this.hoverTarget, 7, dt);
-    this.dim = damp(this.dim, this.dimTarget, 5, dt);
+    const lead = field.focused === this;                                  // the flower being looked at is never dimmed or ghosted
+    this.dim = lead ? 1 : damp(this.dim, this.dimTarget, 5, dt);
     const hv = this.h;
 
     // sway + lean, and the stem leaning gently towards the camera once the flower is "awake"
@@ -129,17 +172,20 @@ export class Flower {
     g.scale.setScalar(this.R * (1 + 0.17 * hv + 0.012 * Math.sin(t * 1.2 + L.phase) + tb * (0.45 + 0.2 * hv)));
     if (this.hasImage) {
       if (this.textureState === 2) this.inkFade = Math.min(1, this.inkFade + dt * 1.4);
-      if (this.visited && this.colorState === 2) this.visitFade = this.visitInstant ? 1 : Math.min(1, this.visitFade + dt * 0.5);
-      const vf = easeOut(this.visitFade);
-      this.disc.material.opacity = 0.93 * this.dim;
-      this.disc.material.color.copy(PAPER).lerp(PAPER_WARM, vf * 0.8).lerp(PAPER_HOT, hv);
-      this.ink.material.opacity = this.inkFade * this.dim * (0.9 + 0.1 * hv) * (1 - vf);
-      if (this.colorMesh) this.colorMesh.material.opacity = vf * this.dim * (0.94 + 0.06 * hv);
+      // awakening: the sketch turns into the photograph. Quick when it is the flower you have just opened (done before the camera arrives).
+      if (this.visited && this.colorState === 2) this.visitFade = this.visitInstant ? 1 : Math.min(1, this.visitFade + dt * (lead ? 1.2 : 0.5));
+      const vf = easeOut(this.visitFade), U = this.uni;
+      U.uInkIn.value = this.inkFade; U.uVisit.value = vf; U.uHot.value = hv; U.uOpacity.value = this.dim;
       if (vf !== this.visitApplied) { this.visitApplied = vf; field.tintFlower(this, vf); }
+      if (lead !== this.lead) {                                           // the flower in focus is drawn last and on top of everything translucent
+        this.lead = lead;
+        this.face.renderOrder = lead ? 1000 : 0; this.glow.renderOrder = lead ? 999 : 0;
+        this.face.material.depthTest = !lead; this.glow.material.depthTest = !lead;
+      }
       const want = tb > 0.5 ? this.shared.ringTex : this.shared.glowTex;      // a soft ring from above, a soft glow on the ground
       if (this.glow.material.map !== want) this.glow.material.map = want;
       this.glow.scale.setScalar(4.4 + 1.5 * tb);
-      this.glow.material.opacity = (0.75 + 0.2 * tb) * hv;
+      this.glow.material.opacity = (0.75 + 0.2 * tb) * hv * (lead ? 0.3 : 1);   // a halo would only pale the picture while you look at it
     }
   }
 }

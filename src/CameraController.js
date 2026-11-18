@@ -250,7 +250,7 @@ export class CameraController {
   /* ---------- fly to a flower ---------- */
   focusOn(flower, dur) {
     if (this.trans) { this.v = this.trans.to; this.trans = null; }
-    const yaw0 = clamp(flower.layout.yaw * 0.5, -0.3, 0.3), R = flower.R, d = R * (this.mobile ? 6.4 : 3.8);
+    const yaw0 = clamp(flower.layout.yaw * 0.5, -0.3, 0.3), R = flower.R, d = R * (this.mobile ? 6.4 : 4.4);
     const fwd = new THREE.Vector3(Math.sin(yaw0), 0, Math.cos(yaw0)), right = new THREE.Vector3(Math.cos(yaw0), 0, -Math.sin(yaw0));
     const hp = flower.headPos.clone();
     const pos = hp.clone().addScaledVector(fwd, d); pos.y += R * 0.1;
