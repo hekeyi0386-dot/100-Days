@@ -1,6 +1,9 @@
 /* GardenScene: assembles the world (terrain, atmosphere, flowers), the camera, and the UI on top of it.
  *   GardenScene
- *   ├─ CameraController    scroll to walk, mouse to look, click to fly to a flower
+ *   ├─ Intro               the prelude: you are a butterfly, entering the garden
+ *   ├─ CameraController    bird's eye (default, zoom + pan) / overview / walk; click to land on a flower
+ *   ├─ Butterfly / Pollen  the visitor, and what it stirs up on the flowers it visits
+ *   ├─ Visits              which flowers have been awakened into colour (kept in localStorage)
  *   ├─ Terrain / Sky / Hills
  *   ├─ Atmosphere          light, fog, grass, motes
  *   ├─ FlowerField         100 × Flower
@@ -14,6 +17,10 @@ import { FlowerField } from "./FlowerField.js";
 import { DayOverlay } from "./DayOverlay.js";
 import { ProgressIndicator } from "./ProgressIndicator.js";
 import { ViewSwitcher } from "./ViewSwitcher.js";
+import { Pollen } from "./Pollen.js";
+import { Visits } from "./Visits.js";
+import { Butterfly } from "./Butterfly.js";
+import { Intro } from "./Intro.js";
 import { tOfZ, zOfT } from "./layout.js";
 import { clamp, lerp, pad3, smoothstep } from "./utils.js";
 
@@ -35,10 +42,14 @@ export class GardenScene {
     this.scene.add(createHills());
     this.scene.add(createTerrain({ mobile: this.mobile }));
     this.atmosphere = createAtmosphere(this.scene, { mobile: this.mobile });
-    this.field = new FlowerField(this.entries, this.total, { mobile: this.mobile, anisotropy: Math.min(4, r.capabilities.getMaxAnisotropy()) });
+    this.visits = new Visits();
+    this.field = new FlowerField(this.entries, this.total, { mobile: this.mobile, anisotropy: Math.min(4, r.capabilities.getMaxAnisotropy()), visits: this.visits });
     this.scene.add(this.field.group);
+    this.pollen = new Pollen(); this.field.pollen = this.pollen; this.scene.add(this.pollen.points);
 
-    this.controller = new CameraController(this.camera, canvas, { mobile: this.mobile, bounds: this.field.bounds });
+    const deepLink = /^#day-\d+$/.test(location.hash);                        // a link to one day skips the prelude
+    this.controller = new CameraController(this.camera, canvas, { mobile: this.mobile, bounds: this.field.bounds, startZoom: deepLink ? 1 : 1.55 });
+    this.controller.locked = !deepLink;
     this.views = new ViewSwitcher((name) => this.setView(name));
     this.controller.onViewChange = (name) => this.viewChanged(name);
     this.overlay = new DayOverlay();
@@ -49,7 +60,12 @@ export class GardenScene {
     this.raycaster = new THREE.Raycaster();
     this.current = null; this.last = performance.now(); this.frames = 0; this.slow = 0; this.t = 0;
     this.hintMoved = 0; this.idleTimer = 0;
-    this.fog = this.scene.fog; this.viewChanged("walk", true);
+    this.fog = this.scene.fog; this.viewChanged("top", true);
+    this.butterfly = new Butterfly();
+    this.intro = new Intro({ onEnter: () => this.enterGarden() }); if (deepLink) this.intro.skip();
+    this.visits.onChange = () => this.updateAwake();
+    document.querySelector("#awake-reset").addEventListener("click", () => this.forget());
+    this.updateAwake();
 
     this.bind(); this.resize(); this.armIdle();
   }
@@ -76,7 +92,7 @@ export class GardenScene {
     this.overlay.onPrev = () => this.step(-1);
     this.overlay.onNext = () => this.step(1);
     addEventListener("keydown", (e) => {
-      if (!this.current) { if (e.key === "Escape" && this.controller.view !== "walk") this.setView("walk"); return; }
+      if (!this.current) { if (e.key === "Escape" && this.controller.view !== "top") this.setView("top"); return; }
       if (e.key === "Escape") this.closeDay(); else if (e.key === "ArrowLeft") this.step(-1); else if (e.key === "ArrowRight") this.step(1);
     });
     addEventListener("popstate", () => {
@@ -113,9 +129,9 @@ export class GardenScene {
     for (const n of ["walk", "overview", "top"]) document.body.classList.toggle("view-" + n, n === name);
     const coarse = matchMedia("(pointer:coarse)").matches;
     this.hint.textContent = {
-      walk: coarse ? "Swipe to walk deeper \u00b7 tap a flower to enter a day" : "Scroll to walk deeper \u00b7 hover a flower \u00b7 click to enter a day",
-      overview: coarse ? "Swipe to drift along the garden \u00b7 tap a flower to descend" : "Scroll to drift along the garden \u00b7 click a flower to descend into it",
-      top: coarse ? "One field, one hundred days \u00b7 tap a day to descend" : "One field, one hundred days \u00b7 hover a flower \u00b7 click to descend into that day",
+      walk: coarse ? "Swipe to flutter deeper \u00b7 tap a flower to land" : "Scroll to flutter deeper \u00b7 hover to visit a flower \u00b7 click to land",
+      overview: coarse ? "Swipe to glide along the garden \u00b7 tap a flower to land" : "Scroll to glide along the garden \u00b7 click a flower to land",
+      top: coarse ? "Drag to drift \u00b7 pinch to draw near \u00b7 tap a flower to land" : "Drag to drift \u00b7 scroll to draw near \u00b7 rest on a flower to wake it",
     }[name];
     this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle();
     clearTimeout(this.hintFade);
@@ -133,6 +149,7 @@ export class GardenScene {
     const f = this.field.byDay.get(day); if (!f || !f.hasImage) return;
     const first = !this.current;
     this.current = f; document.body.classList.add("focusing");
+    f.loadColor(this.field.loader, this.field.anisotropy);                    // so its colour is ready by the time we arrive
     this.field.setHover(null); this.field.setFocus(f); this.hideTag();
     this.controller.focusOn(f, first ? 0 : 1.3);
     const idx = this.filled.indexOf(day);
@@ -165,11 +182,12 @@ export class GardenScene {
   /* ---------- per frame ---------- */
   hover() {
     const c = this.controller;
-    if (this.current || c.mode !== "free" || c.trans || !c.hasPointer) { if (this.field.hovered) { this.field.setHover(null); this.hideTag(); } return; }
+    if (this.current || c.mode !== "free" || c.trans || !c.hasPointer || this.intro.open) { if (this.field.hovered) { this.field.setHover(null); this.hideTag(); } return; }
     const f = this.pickNDC(c.pointer);
+    if (f && f.hasImage && f !== this.field.hovered) { const up = this.field.faceUp; this.pollen.burst(f.headPos, f.R * (1 + 0.45 * up), 9, 1 + 1.6 * up); }   // the butterfly arrives: a puff of pollen
     this.field.setHover(f);
     if (f) this.showTag(f); else this.hideTag();
-    this.canvas.style.cursor = f && f.hasImage ? "pointer" : "";
+    if (!this.butterfly.enabled) this.canvas.style.cursor = f && f.hasImage ? "pointer" : "";
   }
 
   showTag(f) {
@@ -189,7 +207,39 @@ export class GardenScene {
     if (x + w > innerWidth - 12) x = (v.x * 0.5 + 0.5) * innerWidth - rpx - 14 - w;
     tag.style.transform = `translate3d(${x.toFixed(0)}px,${clamp(y - h / 2, 10, innerHeight - h - 10).toFixed(0)}px,0)`;
   }
-  hideTag() { this.tag.classList.remove("show"); this.tag.dataset.day = ""; this.canvas.style.cursor = ""; }
+  hideTag() { this.tag.classList.remove("show"); this.tag.dataset.day = ""; if (!this.butterfly.enabled) this.canvas.style.cursor = ""; }
+
+  /* ---------- the butterfly, and the garden's memory ---------- */
+  headScreen(f) {                                   // where a flower's head is on screen, and how big
+    const v = f.headPos.clone().project(this.camera), dist = f.headPos.distanceTo(this.camera.position);
+    const scale = 1 + 0.17 + this.field.faceUp * 0.45, r = (f.R * scale / dist) / Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * (innerHeight / 2);
+    return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, r, behind: v.z > 1 };
+  }
+
+  updateButterfly(dt) {
+    const c = this.controller, active = !this.current && !this.intro.open && c.mode === "free" && c.hasPointer;
+    const pointer = c.hasPointer ? { x: (c.pointer.x * 0.5 + 0.5) * innerWidth, y: (-c.pointer.y * 0.5 + 0.5) * innerHeight } : null;
+    let perch = null; const h = this.field.hovered;
+    if (active && h && h.hasImage) { const s = this.headScreen(h); if (!s.behind) perch = { x: s.x, y: s.y - s.r * 0.7 }; }   // it lands on the rim of the flower it visits
+    this.butterfly.update(dt, pointer, perch, active);
+  }
+
+  enterGarden() { this.controller.enter(); this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle(); }
+
+  // the butterfly has landed and the visitor is looking: the flower wakes into colour, and stays that way
+  awakenNow(f) {
+    if (!this.field.awaken(f)) return;
+    this.pollen.burst(f.headPos, f.R * 1.15, 42, 1.3); this.updateAwake();
+  }
+
+  updateAwake() {
+    const n = [...this.visits.set].filter((d) => this.field.byDay.get(d) && this.field.byDay.get(d).hasImage).length;
+    const el = document.querySelector("#awake"); el.hidden = n === 0;
+    document.querySelector("#awake-n").textContent = n === 1 ? `1 of ${this.filled.length} flowers awake` : `${n} of ${this.filled.length} flowers awake`;
+    this.timeline.setVisited(this.visits.set);
+  }
+
+  forget() { this.visits.clear(); this.field.sleepAll(); this.updateAwake(); }
 
   currentDay() {
     if (this.current) return this.current.day;
@@ -215,13 +265,17 @@ export class GardenScene {
 
   frame = () => {
     const now = performance.now(), dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; this.t += dt;
+    if (this.intro.open) this.controller.pan.set(Math.sin(this.t * 0.09) * 9, Math.cos(this.t * 0.07) * 3);   // the prelude's backdrop drifts very slowly
     this.controller.update(dt);
-    this.field.faceUp = this.controller.faceUp; this.field.topYaw = this.controller.portrait ? 0 : Math.PI / 2; this.field.loadAll = this.controller.v > 0.5;
+    if (this.current && this.controller.mode === "focus" && !this.current.visited) this.awakenNow(this.current);
+    this.field.faceUp = this.controller.faceUp; this.field.topYaw = this.controller.portrait ? 0 : Math.PI / 2; this.field.topPitch = this.controller.pitch; this.field.loadAll = this.controller.v > 0.5;
     this.field.update(this.t, dt, this.camera);
     this.updateFog();
     this.atmosphere.update(this.t);
     this.sky.position.copy(this.camera.position);
     this.hover();
+    this.pollen.update(dt, this.camera, innerHeight);
+    this.updateButterfly(dt);
     const c = this.controller, day = this.currentDay(), z0 = lerp(c.zStart, c.zEnd, c.ps), a = smoothstep(0, 1, Math.min(c.v, 1)), top = smoothstep(1, 2, c.v);
     let lo = clamp(Math.floor(1 + tOfZ(z0 - 4 + 14 * a) * (this.total - 1)), 1, this.total), hi = clamp(Math.ceil(1 + tOfZ(z0 - 105 - 30 * a) * (this.total - 1)), 1, this.total);
     if (top > 0.5) { lo = 1; hi = this.total; }                       // from above, every day is in view

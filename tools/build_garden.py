@@ -48,6 +48,20 @@ def flower_head(ink, size=384):
     return out
 
 
+def flower_head_color(photo, size=384):
+    """The same round, feathered head, but from the colour photograph (what a visited flower blooms into)."""
+    im = photo.convert("RGB")
+    w, h = im.size; m = min(w, h)
+    top = int((h - m) * 0.4)                                    # crop a touch above centre; faces / subjects sit high
+    im = im.crop(((w - m) // 2, top, (w - m) // 2 + m, top + m)).resize((size, size), Image.LANCZOS).convert("RGBA")
+    yy, xx = np.mgrid[0:size, 0:size]
+    r = np.hypot(xx - (size - 1) / 2, yy - (size - 1) / 2) / (size / 2)
+    feather = np.clip((1.0 - r) / 0.30, 0, 1)
+    feather = feather * feather * (3 - 2 * feather)
+    im.putalpha(Image.fromarray((feather * 255).astype(np.uint8)))
+    return im
+
+
 def tag(path):
     return hashlib.md5(open(path, "rb").read()).hexdigest()[:8]
 
@@ -78,6 +92,9 @@ def main(folder, rebuild=False):
             photo_small(Image.open(found[d]["p"])).save(os.path.join(ROOT, p_out), quality=82, method=6)
         if rebuild or not os.path.exists(os.path.join(ROOT, t_out)):
             flower_head(Image.open(os.path.join(ROOT, s_out))).save(os.path.join(ROOT, t_out), quality=88, method=6, alpha_quality=100)
+        hc_out = f"assets/heads/day{d:02d}-color.webp"
+        if rebuild or not os.path.exists(os.path.join(ROOT, hc_out)):
+            flower_head_color(Image.open(os.path.join(ROOT, p_out))).save(os.path.join(ROOT, hc_out), quality=84, method=6, alpha_quality=100)
         c = caps.get(str(d), {})
         entries.append({
             "day": d,
@@ -85,6 +102,7 @@ def main(folder, rebuild=False):
             "sketch": f"{s_out}?v={tag(os.path.join(ROOT, s_out))}",
             "photo": f"{p_out}?v={tag(os.path.join(ROOT, p_out))}",
             "head": f"{t_out}?v={tag(os.path.join(ROOT, t_out))}",
+            "headColor": f"{hc_out}?v={tag(os.path.join(ROOT, hc_out))}",
             "caption": c.get("caption", ""),
         })
 

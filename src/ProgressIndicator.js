@@ -19,6 +19,8 @@ export class ProgressIndicator {
     this.last = { day: -1, lo: -1, hi: -1 };
   }
 
+  setVisited(set) { this.ticks.forEach((t, i) => t.classList.toggle("visited", set.has(i + 1))); }
+
   update(day, lo, hi, hoverDay, all) {
     if (all !== this.last.all) { this.last.all = all; this.last.day = -1; }
     if (all) { this.big.innerHTML = "ALL " + this.total + " <i>DAYS</i>"; this.label.textContent = ""; }

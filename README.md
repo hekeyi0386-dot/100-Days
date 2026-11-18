@@ -7,13 +7,28 @@ Days that have not happened yet are pale silhouettes waiting to be filled in.
 Static site, no build step. Serve the folder (`python3 -m http.server`) and open `index.html`
 (ES modules need http, not `file://`).
 
+## The idea
+You are a butterfly entering the garden. Every flower holds one day; where you land, the garden wakes in colour.
+
+- **Prelude** – a quiet invitation (`#intro`) sits in front of the garden, which is already growing behind it. One button flies you in
+  (a link to a single day, `#day-27`, skips it).
+- **You open on the bird's eye**: all 100 days at once, laid out as twelve small constellations (rings, crescents, spirals,
+  sunflower-like clusters) along one winding path, joined by faint threads like a star map. Day 1 is on the left, day 100 on the right.
+- **Your cursor is a butterfly** (mouse only). It flutters after the pointer, beats its wings faster while travelling, and lands on the
+  flower you hover; the flower answers with a ring of light and a little pollen.
+- **Click a flower to land on it.** The camera descends, the day opens, and the flower's head blooms from the black-and-white sketch into
+  the colour photograph, its stem and leaves turning green. It stays that way: awakened flowers are remembered in `localStorage`
+  (`keyis-garden:visited:v1`), counted top right ("3 of 44 flowers awake"), and lit gold on the timeline. "reset" (hover the counter) lets the garden sleep again.
+
 ## Three ways of looking (bottom-left, or keys 1 / 2 / 3)
+- **Bird's eye** *(the way in)* – high above, slightly tilted, the whole field at once; every picture face-up. Days still to come are pale hollow silhouettes.
+  It is a real place to explore: **scroll / pinch** draws nearer or further (anchored to the pointer, bounded: never so near the composition
+  breaks, never so far it is unreadable), **drag / two-finger swipe / arrow keys / Shift+scroll** drift across the field (bounded too).
+  Choosing "Bird's eye" again re-frames the whole field.
+- **Overview** – standing on a hill: up, pulled back, looking diagonally across the garden.
 - **Explore** – on the ground, at the height of the flowers: one day at a time.
-- **Overview** – standing on a hill: up, pulled back, looking diagonally across the field.
-- **Bird's eye** – high above, slightly tilted, the whole field at once: day 1 on the left, day 100 on the right, every
-  picture face-up like a seed head. Days still to come are pale hollow silhouettes. Scroll zooms a little, drag slides the field.
-One camera eases between three designed viewpoints (`CameraController.js`); click any flower from any view to descend into that
-day, and "Back to the garden" returns you to the view you left. `Esc` steps back to the ground. Vertical control stays limited:
+One camera eases between designed viewpoints (`CameraController.js`); click any flower from any view to descend into that
+day, and "Back to the garden" returns you to the view you left. `Esc` steps back to the bird's eye. Vertical control stays limited:
 `Shift`/`Alt` + scroll, or dragging up/down, lifts the camera a little while exploring.
 
 ## Controls
@@ -28,7 +43,10 @@ day, and "Back to the garden" returns you to the view you left. `Esc` steps back
 |---|---|
 | `main.js` | boots the scene, WebGL fallback |
 | `GardenScene.js` | assembles everything, hover / click, UI wiring, adaptive resolution |
-| `layout.js` | where each day lives: time → depth along a winding path, dense clusters, open clearings; terrain height |
+| `Intro.js` | the prelude page |
+| `Butterfly.js`, `Pollen.js` | the butterfly cursor, and the pollen it stirs up |
+| `Visits.js` | which flowers have been awakened (localStorage) |
+| `layout.js` | where each day lives: twelve constellations (ring / arc / spiral / cluster) along a winding path, two clearings; terrain height |
 | `FlowerField.js` | maps the day data onto `Flower`s, instanced stems / leaves / shadows / seedlings, lazy texture loading |
 | `Flower.js` | one flower: stem, leaves, round picture head, hover animation |
 | `CameraController.js` | the three views (presets + eased transitions), scroll walking, parallax, drag, fly-to-flower |
@@ -41,7 +59,7 @@ Three.js r187 is vendored in `vendor/` (MIT, no npm needed).
 ## Adding days
 1. Put the sketch and photo in the upload folder as `<n>s Large.jpeg` and `<n>p Large.jpeg`.
 2. `python3 tools/build_garden.py "S for Sketches；P for Photos"` makes the web-sized photo, the transparent sketch
-   and the round flower-head texture (`assets/heads/`), and rewrites `data.js`. Existing outputs are kept (`--rebuild` redoes all).
+   the two round flower-head textures (`assets/heads/dayNN.webp` ink, `dayNN-color.webp` for awakened flowers), and rewrites `data.js`. Existing outputs are kept (`--rebuild` redoes all).
 3. Titles / notes: `captions.json` → `{"27": {"title": "...", "caption": "..."}}`, then run the script again.
 4. `python3 tools/bump_version.py` before pushing, so browsers fetch the new files.
 

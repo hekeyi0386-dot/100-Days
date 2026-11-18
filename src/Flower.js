@@ -7,7 +7,8 @@ import { clamp, damp, lerp } from "./utils.js";
 const UP = new THREE.Vector3(0, 1, 0), RIGHT = new THREE.Vector3(1, 0, 0);
 const _q = new THREE.Quaternion(), _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qs = new THREE.Quaternion();
 const _e = new THREE.Euler(), _v = new THREE.Vector3(), _m = new THREE.Matrix4(), _s = new THREE.Vector3(), _c = new THREE.Color();
-const PAPER = new THREE.Color(0xe6e2d5), PAPER_HOT = new THREE.Color(0xfffcf2);
+const PAPER = new THREE.Color(0xe6e2d5), PAPER_HOT = new THREE.Color(0xfffcf2), PAPER_WARM = new THREE.Color(0xf8efd8);
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
 
 export class Flower {
   constructor(layout, entry, index, shared) {
@@ -20,6 +21,8 @@ export class Flower {
     this.top = new THREE.Vector3(); this.headPos = new THREE.Vector3();
     this.h = 0; this.hoverTarget = 0; this.dim = 1; this.dimTarget = 1; this.inkFade = 0; this.textureState = 0;
     this.yaw = layout.yaw; this.pitch = -0.1;
+    // awakening: once visited the sketch gives way to the colour photograph
+    this.visited = false; this.visitFade = 0; this.visitInstant = false; this.colorState = 0; this.colorMesh = null; this.visitApplied = -1;
 
     if (this.hasImage) {
       const g = this.head = new THREE.Group(); g.rotation.order = "YXZ";
@@ -47,6 +50,20 @@ export class Flower {
       this.ink.material.map = tex; this.ink.material.needsUpdate = true; this.textureState = 2;
     }, undefined, () => { this.textureState = 3; });
   }
+
+  /* the colour head is only fetched once a flower has been visited */
+  loadColor(loader, anisotropy) {
+    if (!this.hasImage || this.colorState || !this.entry.headColor) return;
+    this.colorState = 1;
+    loader.load(this.entry.headColor, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = anisotropy;
+      this.colorMesh = new THREE.Mesh(this.shared.inkGeo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false }));
+      this.colorMesh.position.z = 0.016; this.head.add(this.colorMesh); this.colorState = 2;
+    }, undefined, () => { this.colorState = 3; });
+  }
+
+  awaken(instant = false) { this.visited = true; this.visitInstant = instant; }
+  sleep() { this.visited = false; this.visitFade = 0; this.visitInstant = false; this.visitApplied = -1; }
 
   update(t, dt, cam, wind, field) {
     const L = this.layout, { stems, leaves } = field;
@@ -86,13 +103,17 @@ export class Flower {
     // upright (and turning to you when awake) down on the ground; lifting their faces to the sky from above
     const tb = field.faceUp, hh = hv * (1 - tb);
     g.rotation.y = lerp(lerp(L.yaw, clamp(face, -1.0, 1.0), hh), field.topYaw, tb);
-    g.rotation.x = lerp(lerp(-0.1, -clamp(rise, -0.3, 0.5), hh), -1.31, tb);
-    g.scale.setScalar(this.R * (1 + 0.17 * hv + 0.012 * Math.sin(t * 1.2 + L.phase) + tb * (0.7 + 0.2 * hv)));
+    g.rotation.x = lerp(lerp(-0.1, -clamp(rise, -0.3, 0.5), hh), -field.topPitch, tb);       // face the sky as steeply as the camera looks down
+    g.scale.setScalar(this.R * (1 + 0.17 * hv + 0.012 * Math.sin(t * 1.2 + L.phase) + tb * (0.45 + 0.2 * hv)));
     if (this.hasImage) {
       if (this.textureState === 2) this.inkFade = Math.min(1, this.inkFade + dt * 1.4);
+      if (this.visited && this.colorState === 2) this.visitFade = this.visitInstant ? 1 : Math.min(1, this.visitFade + dt * 0.5);
+      const vf = easeOut(this.visitFade);
       this.disc.material.opacity = 0.93 * this.dim;
-      this.disc.material.color.copy(PAPER).lerp(PAPER_HOT, hv);
-      this.ink.material.opacity = this.inkFade * this.dim * (0.9 + 0.1 * hv);
+      this.disc.material.color.copy(PAPER).lerp(PAPER_WARM, vf * 0.8).lerp(PAPER_HOT, hv);
+      this.ink.material.opacity = this.inkFade * this.dim * (0.9 + 0.1 * hv) * (1 - vf);
+      if (this.colorMesh) this.colorMesh.material.opacity = vf * this.dim * (0.94 + 0.06 * hv);
+      if (vf !== this.visitApplied) { this.visitApplied = vf; field.tintFlower(this, vf); }
       const want = tb > 0.5 ? this.shared.ringTex : this.shared.glowTex;      // a soft ring from above, a soft glow on the ground
       if (this.glow.material.map !== want) this.glow.material.map = want;
       this.glow.scale.setScalar(4.4 + 1.5 * tb);

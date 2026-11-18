@@ -5,23 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Keyi's Garden</title>
 <meta name="description" content="A garden grown from 100 everyday observations: one flower, one frame, one day.">
-<link rel="stylesheet" href="style.css?v=202611171859">
+<link rel="stylesheet" href="style.css?v=202611180556">
 <script type="importmap">
 {
   "imports": {
     "three": "./vendor/three.module.js?v=187",
     "./vendor/three.core.js": "./vendor/three.core.js?v=187",
-    "./src/utils.js": "./src/utils.js?v=202611171859",
-    "./src/layout.js": "./src/layout.js?v=202611171859",
-    "./src/Terrain.js": "./src/Terrain.js?v=202611171859",
-    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611171859",
-    "./src/Flower.js": "./src/Flower.js?v=202611171859",
-    "./src/FlowerField.js": "./src/FlowerField.js?v=202611171859",
-    "./src/CameraController.js": "./src/CameraController.js?v=202611171859",
-    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611171859",
-    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611171859",
-    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611171859",
-    "./src/GardenScene.js": "./src/GardenScene.js?v=202611171859"
+    "./src/utils.js": "./src/utils.js?v=202611180556",
+    "./src/layout.js": "./src/layout.js?v=202611180556",
+    "./src/Terrain.js": "./src/Terrain.js?v=202611180556",
+    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611180556",
+    "./src/Flower.js": "./src/Flower.js?v=202611180556",
+    "./src/FlowerField.js": "./src/FlowerField.js?v=202611180556",
+    "./src/CameraController.js": "./src/CameraController.js?v=202611180556",
+    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611180556",
+    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611180556",
+    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611180556",
+    "./src/Pollen.js": "./src/Pollen.js?v=202611180556",
+    "./src/Visits.js": "./src/Visits.js?v=202611180556",
+    "./src/Butterfly.js": "./src/Butterfly.js?v=202611180556",
+    "./src/Intro.js": "./src/Intro.js?v=202611180556",
+    "./src/GardenScene.js": "./src/GardenScene.js?v=202611180556"
   }
 }
 </script>
@@ -35,6 +39,8 @@
   <p>100 days of frames</p>
 </header>
 <p class="nowday" id="nowday" aria-live="polite"></p>
+<p class="awake" id="awake" hidden><span id="awake-n"></span><button id="awake-reset" type="button" title="Forget my visits and let the garden sleep again">reset</button></p>
+<div class="butterfly" id="butterfly" aria-hidden="true"></div>
 
 <p class="hint" id="hint">Scroll to walk deeper &middot; hover a flower &middot; click to enter a day</p>
 
@@ -77,10 +83,26 @@
   </article>
 </section>
 
+
+<section class="intro" id="intro" aria-labelledby="intro-title">
+  <div class="intro-dust" aria-hidden="true"></div>
+  <div class="intro-bf small b1" aria-hidden="true"></div>
+  <div class="intro-bf small b2" aria-hidden="true"></div>
+  <div class="intro-card">
+    <div class="intro-bf main" aria-hidden="true"></div>
+    <p class="intro-kicker">Keyi&rsquo;s Garden</p>
+    <h1 id="intro-title">You are a butterfly,<br><em>entering my garden.</em></h1>
+    <p class="intro-lede">Every flower holds one frame from one of my days &mdash; a small moment I almost walked past.</p>
+    <p class="intro-lede">Drift slowly. Rest on the ones that call to you,<br>and wherever you land, the garden wakes in colour.</p>
+    <button id="enter" class="intro-cta" type="button"><span>Fly into the garden</span></button>
+    <p class="intro-note">drag to drift &nbsp;&middot;&nbsp; scroll to draw near &nbsp;&middot;&nbsp; click a flower to land</p>
+  </div>
+</section>
+
 <div class="nogl" id="nogl"><p></p></div>
 
-<script src="data.js?v=202611171859"></script>
-<script src="config.js?v=202611171859"></script>
-<script type="module" src="./src/main.js?v=202611171859"></script>
+<script src="data.js?v=202611180556"></script>
+<script src="config.js?v=202611180556"></script>
+<script type="module" src="./src/main.js?v=202611180556"></script>
 </body>
 </html>

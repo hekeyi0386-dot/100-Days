@@ -1,8 +1,9 @@
 /* A curated, editorial camera: one PerspectiveCamera, three designed viewpoints, soft transitions.
  *
- *   walk      at the height of the flowers; scroll walks the winding path, the mouse only tilts the view
+ *   top       (the way in) high above, slightly tilted, the whole field laid out left (day 1) -> right (day 100).
+ *             You can draw nearer (zoom, anchored to the pointer), drift across it (pan), both bounded.
  *   overview  standing on a hill: up, pulled back, looking diagonally across the garden
- *   top       bird's eye: high above, slightly tilted, the whole field laid out left (day 1) -> right (day 100)
+ *   walk      at the height of the flowers; scroll walks the winding path, the mouse only tilts the view
  *
  * A single number `v` (0 walk, 1 overview, 2 top) is eased between the presets, so position, target and
  * field of view always travel together. Clicking a flower flies to it from wherever you are, and
@@ -13,33 +14,36 @@ import { terrainHeight, zOfT, pathX } from "./layout.js";
 
 export const VIEWS = ["walk", "overview", "top"];
 const FOV_OFFSET = [0, 7, 4];
+const ZOOM_MAX = 1.45;                            // how far the bird's eye may draw back (1 = the whole field fits)
+const NEAREST = 20;                               // ...and how near: never closer than this to the field, so the composition holds
 const rad = THREE.MathUtils.degToRad;
-const _v = new THREE.Vector3();
 
 const makePose = () => ({ pos: new THREE.Vector3(), look: new THREE.Vector3() });
+const _g0 = new THREE.Vector3(), _g1 = new THREE.Vector3(), _ndc = new THREE.Vector2();
 
 export class CameraController {
-  constructor(camera, dom, { mobile, bounds }) {
+  constructor(camera, dom, { mobile, bounds, startZoom = 1 }) {
     this.camera = camera; this.dom = dom; this.mobile = mobile; this.bounds = bounds;
     this.zStart = mobile ? 6 : 9; this.zEnd = zOfT(1) + 36;
     this.fovBase = 52; this.fov = 52; this.aspect = 1.6; this.portrait = false;
 
     // walking state
     this.p = 0; this.ps = 0; this.yaw = 0; this.yawS = 0; this.lift = 0; this.liftS = 0;
-    // bird's-eye state
-    this.zoom = 1; this.zoomS = 1; this.pan = new THREE.Vector2(); this.panS = new THREE.Vector2();
+    // bird's-eye state: zoom (1 = whole field) and pan (world units, screen-aligned), each with a smoothed twin
+    this.zoom = startZoom; this.zoomS = startZoom; this.pan = new THREE.Vector2(); this.panS = new THREE.Vector2(); this.glideUntil = 0;
     // pointer
     this.mx = 0; this.my = 0; this.mxS = 0; this.myS = 0; this.hasPointer = false; this.pointer = new THREE.Vector2();
 
-    // views
-    this.view = "walk"; this.v = 0; this.trans = null; this.faceUp = 0;
+    // views: the garden opens as a bird's eye
+    this.view = "top"; this.v = 2; this.trans = null; this.faceUp = 1; this.pitch = rad(75);
     // free | in | focus | out
     this.mode = "free"; this.flight = null; this.focusPose = null;
     this.pos = new THREE.Vector3(); this.look = new THREE.Vector3();
     this.A = makePose(); this.B = makePose(); this.C = makePose(); this.poseFov = 52;
+    this._tp = makePose(); this._tc = new THREE.PerspectiveCamera(); this._ray = new THREE.Raycaster(); this._plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.5);
 
     this.onTap = null; this.onActivity = null; this.onViewChange = null; this.locked = false;
-    this.computePose(0, this.pos, this.look);
+    this.computePose(this.v, this.pos, this.look);
     this.bind();
   }
 
@@ -66,18 +70,24 @@ export class CameraController {
     this.applyYaw(o, this.yawS * 0.7);
   }
 
-  /* high above the whole field, tilted ~15° off vertical so it keeps depth.
-   * Landscape: the camera hangs over one side and looks across, so the long garden runs left -> right.
-   * Portrait: it hangs behind the entrance and the garden runs bottom -> top. */
-  topPose(o) {
-    const b = this.bounds, fov = this.fovBase + FOV_OFFSET[2], vt = Math.tan(rad(fov / 2)), ht = vt * this.aspect, m = 1.14;
-    const dist = (this.portrait ? Math.max((b.d * m) / (2 * vt), (b.w * m + 8) / (2 * ht)) : Math.max((b.d * m) / (2 * ht), (b.w * m + 10) / (2 * vt))) * this.zoomS;
-    const tilt = rad(15), sx = this.panS.x + this.mxS * 3, sy = this.panS.y + this.myS * 2.5;   // pan in screen units
+  /* distance at which the whole field just fits the screen */
+  fitDistance() {
+    const b = this.bounds, fov = this.fovBase + FOV_OFFSET[2], vt = Math.tan(rad(fov / 2)), ht = vt * this.aspect, m = 1.2;
+    return this.portrait ? Math.max((b.d * m) / (2 * vt), (b.w * m + 8) / (2 * ht)) : Math.max((b.d * m) / (2 * ht), (b.w * m + 10) / (2 * vt));
+  }
+
+  /* High above the field. Landscape: the camera hangs over one side and looks across, so the long garden runs
+   * left -> right. Portrait: it hangs behind the entrance and the garden runs bottom -> top.
+   * Tilted ~15° off vertical to keep depth; drawing nearer tips it further, so a close look is more of a glide over the garden. */
+  topPoseFor(o, zoom, pan, parallax) {
+    const b = this.bounds, dist = this.fitDistance() * zoom, tilt = lerp(rad(34), rad(15), smoothstep(0.3, 1.0, zoom));
+    const sx = pan.x + (parallax ? this.mxS * 3 * zoom : 0), sy = pan.y + (parallax ? this.myS * 2.5 * zoom : 0);   // pan in screen directions
     const tx = b.cx - (this.portrait ? -sx : sy), tz = b.cz - (this.portrait ? sy : sx);
     o.look.set(tx, 2.5, tz);
     if (this.portrait) o.pos.set(tx, 2.5 + Math.cos(tilt) * dist, tz + Math.sin(tilt) * dist);
     else o.pos.set(tx + Math.sin(tilt) * dist, 2.5 + Math.cos(tilt) * dist, tz);
   }
+  topPose(o) { this.topPoseFor(o, this.zoomS, this.panS, true); }
 
   applyYaw(o, yaw) {
     const dx = o.look.x - o.pos.x, dz = o.look.z - o.pos.z, c = Math.cos(yaw), s = Math.sin(yaw);
@@ -92,65 +102,134 @@ export class CameraController {
     this.poseFov = this.fovBase + this.fovOffsetAt(v);
   }
 
+  /* ---------- the bird's-eye: zoom and pan, always bounded ---------- */
+  zoomMin() { return clamp(NEAREST / this.fitDistance(), 0.28, 0.6); }
+
+  unitsPerPixel() { return (2 * this.fitDistance() * this.zoomS * Math.tan(rad((this.fovBase + FOV_OFFSET[2]) / 2))) / innerHeight; }
+
+  clampPan() {
+    const b = this.bounds, f = clamp((1.5 - this.zoom) / 1.15, 0.12, 1) * 0.95;          // nearer = more room to roam
+    const lx = (this.portrait ? b.w : b.d) / 2 * f, ly = (this.portrait ? b.d : b.w) / 2 * f;
+    this.pan.set(clamp(this.pan.x, -lx, lx), clamp(this.pan.y, -ly, ly));
+  }
+
+  groundPoint(ndcx, ndcy, zoom, pan, out) {
+    this.topPoseFor(this._tp, zoom, pan, false);
+    const c = this._tc; c.fov = this.fovBase + FOV_OFFSET[2]; c.aspect = this.aspect; c.updateProjectionMatrix();
+    c.position.copy(this._tp.pos); c.lookAt(this._tp.look); c.updateMatrixWorld(true);
+    this._ray.setFromCamera(_ndc.set(ndcx, ndcy), c);
+    return this._ray.ray.intersectPlane(this._plane, out);
+  }
+
+  // draw nearer / further while the spot under the pointer stays (roughly) where it is
+  zoomAt(factor, ndcx = 0, ndcy = 0) {
+    const g0 = this.groundPoint(ndcx, ndcy, this.zoom, this.pan, _g0) && _g0;
+    this.zoom = clamp(this.zoom * factor, this.zoomMin(), ZOOM_MAX);
+    const g1 = this.groundPoint(ndcx, ndcy, this.zoom, this.pan, _g1) && _g1;
+    if (g0 && g1) {
+      const dx = g0.x - g1.x, dz = g0.z - g1.z;
+      if (this.portrait) { this.pan.x += dx; this.pan.y -= dz; } else { this.pan.y -= dx; this.pan.x -= dz; }
+    }
+    this.clampPan();
+  }
+
+  panBy(sx, sy) { this.pan.x += sx; this.pan.y += sy; this.clampPan(); }
+  resetTop() { this.zoom = 1; this.pan.set(0, 0); }
+
   /* ---------- views ---------- */
   setView(name) {
     const to = VIEWS.indexOf(name);
-    if (to < 0 || this.mode !== "free" || name === this.view) return false;
+    if (to < 0 || this.mode !== "free") return false;
+    if (name === this.view) { if (name === "top" && !this.trans && (this.zoom !== 1 || this.pan.lengthSq() > 0)) { this.resetTop(); return true; } return false; }   // "Bird's eye" again = see the whole field again
     const dist = Math.abs(to - this.v);
     this.trans = { from: this.v, to, t: 0, dur: dist > 1.1 ? 2.4 : 1.7 };
     this.view = name; this.onViewChange && this.onViewChange(name);
+    if (name === "top") this.resetTop();
     return true;
   }
+
+  /* the visitor flies in: from a little further out, gliding down to the full view */
+  enter() { this.locked = false; this.zoom = 1; this.pan.set(0, 0); this.glideUntil = performance.now() + 3200; }
 
   /* ---------- input ---------- */
   goToDay(z, immediate) { if (this.view === "top") return; this.p = clamp((this.zStart - (z + 24)) / (this.zStart - this.zEnd), 0, 1); if (immediate) this.ps = this.p; }
 
   bind() {
     const d = this.dom;
+    const ndcOf = (x, y) => [(x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1];
+
     addEventListener("wheel", (e) => {
       e.preventDefault();                          // also stops the trackpad swipe from triggering browser back/forward
       if (this.busy) return;
-      const k = e.deltaMode === 1 ? 16 : 1;
+      const k = e.deltaMode === 1 ? 16 : 1, [nx, ny] = ndcOf(e.clientX, e.clientY);
       const dy = e.shiftKey && !e.deltaY ? e.deltaX : e.deltaY, dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : 0;
-      if (this.view === "top") this.zoom = clamp(this.zoom * (1 + dy * k * 0.0009), 0.62, 1.3);              // gentle zoom, bounded
-      else if (e.shiftKey || e.altKey) this.lift = clamp(this.lift + dy * k * 0.0011, 0, 1);                  // limited vertical control
+      if (this.view === "top") {
+        const upp = this.unitsPerPixel();
+        if (e.ctrlKey) this.zoomAt(Math.exp(e.deltaY * 0.012), nx, ny);                       // trackpad pinch
+        else if (e.shiftKey) this.panBy((e.deltaX || e.deltaY) * k * upp, 0);                 // Shift + wheel: drift sideways
+        else if (e.altKey) this.panBy(0, -dy * k * upp);                                      // Alt + wheel: drift up / down
+        else { if (dx) this.panBy(dx * k * upp * 0.8, 0); if (!dx || Math.abs(e.deltaY) > 0) this.zoomAt(Math.exp(e.deltaY * k * 0.0012), nx, ny); }
+      } else if (e.shiftKey || e.altKey) this.lift = clamp(this.lift + dy * k * 0.0011, 0, 1);   // limited vertical control
       else this.p = clamp(this.p + (dy + dx) * k * 0.00019, 0, 1);
       this.onActivity && this.onActivity();
     }, { passive: false });
+
     addEventListener("keydown", (e) => {
-      if (this.busy || this.view === "top") return;
+      if (this.busy) return;
+      if (this.view === "top") {
+        const s = 8 * this.zoom, key = e.key;
+        if (key === "ArrowLeft") this.panBy(-s, 0); else if (key === "ArrowRight") this.panBy(s, 0);
+        else if (key === "ArrowUp") this.panBy(0, s); else if (key === "ArrowDown") this.panBy(0, -s);
+        else if (key === "+" || key === "=") this.zoomAt(0.82); else if (key === "-" || key === "_") this.zoomAt(1.22);
+        else return;
+        e.preventDefault(); this.onActivity && this.onActivity(); return;
+      }
       const step = { ArrowDown: 0.035, ArrowUp: -0.035, PageDown: 0.1, PageUp: -0.1, " ": 0.1 }[e.key];
       if (step !== undefined) { e.preventDefault(); this.p = clamp(this.p + step, 0, 1); this.onActivity && this.onActivity(); }
       if (e.key === "Home") this.p = 0; if (e.key === "End") this.p = 1;
     });
-    let down = null;
-    d.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now(), moved: 0, touch: e.pointerType === "touch" }; d.setPointerCapture(e.pointerId); });
+
+    const pts = new Map(); let down = null, pinch = null;
+    d.addEventListener("pointerdown", (e) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); d.setPointerCapture(e.pointerId);
+      if (pts.size === 1) down = { lx: e.clientX, ly: e.clientY, t: performance.now(), moved: 0, touch: e.pointerType === "touch" };
+      else { down = null; const [a, b] = [...pts.values()]; pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 }; }
+    });
     d.addEventListener("pointermove", (e) => {
-      this.pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+      this.pointer.set(...ndcOf(e.clientX, e.clientY));
       this.hasPointer = e.pointerType !== "touch";
       if (this.hasPointer) { this.mx = this.pointer.x; this.my = this.pointer.y; }
       this.onActivity && this.onActivity();
+      if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pts.size === 2) {                                   // two fingers: draw nearer / further, and drift
+        if (this.busy || this.view !== "top") return;
+        const [a, b] = [...pts.values()], dist = Math.hypot(a.x - b.x, a.y - b.y), cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+        const upp = this.unitsPerPixel(); this.pan.x -= (cx - pinch.cx) * upp; this.pan.y += (cy - pinch.cy) * upp;
+        if (dist > 8) this.zoomAt(pinch.dist / dist, ...ndcOf(cx, cy)); else this.clampPan();
+        pinch = { dist, cx, cy }; return;
+      }
       if (!down) return;
       const dx = e.clientX - down.lx, dy = e.clientY - down.ly; down.lx = e.clientX; down.ly = e.clientY;
       down.moved += Math.abs(dx) + Math.abs(dy);
       if (down.moved <= 6 || this.busy) return;
-      if (this.view === "top") {                                       // drag slides the field a little (bounded)
-        const upp = (2 * this.topDist() * Math.tan(rad((this.fovBase + FOV_OFFSET[2]) / 2))) / innerHeight;
-        this.pan.set(clamp(this.pan.x - dx * upp, -16, 16), clamp(this.pan.y + dy * upp, -12, 12));
+      if (this.view === "top") {                                       // drag the garden under you
+        const upp = this.unitsPerPixel(); this.pan.x -= dx * upp; this.pan.y += dy * upp; this.clampPan();
       } else {
         this.yaw = clamp(this.yaw - dx * (down.touch ? 0.0042 : 0.0034), -0.55, 0.55);
         if (down.touch) this.p = clamp(this.p - dy * 0.0007, 0, 1);
         else this.lift = clamp(this.lift - dy * 0.004, 0, 1);          // vertical drag lifts the camera a little
       }
     });
-    d.addEventListener("pointerup", (e) => {
-      if (down && down.moved < 7 && performance.now() - down.t < 600 && this.onTap && this.mode === "free") this.onTap(e.clientX, e.clientY, down.touch);
-      down = null;
-    });
+    const lift = (e) => {
+      const wasSingle = pts.size === 1 && down;
+      pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
+      if (wasSingle && down.moved < 7 && performance.now() - down.t < 600 && this.onTap && this.mode === "free") this.onTap(e.clientX, e.clientY, down.touch);
+      if (!pts.size) down = null;
+    };
+    d.addEventListener("pointerup", lift);
+    d.addEventListener("pointercancel", (e) => { pts.delete(e.pointerId); pinch = null; down = null; });
     d.addEventListener("pointerleave", (e) => { if (e.pointerType !== "touch") { this.hasPointer = false; this.mx = 0; this.my = 0; } });
   }
-
-  topDist() { return this.C.pos.distanceTo(this.C.look); }
 
   /* ---------- fly to a flower ---------- */
   focusOn(flower, dur) {
@@ -181,7 +260,9 @@ export class CameraController {
     this.mxS = damp(this.mxS, this.mx, 2.6, dt); this.myS = damp(this.myS, this.my, 2.6, dt);
     if (this.mode === "free") {
       this.ps = damp(this.ps, this.p, 2.4, dt); this.yawS = damp(this.yawS, this.yaw, 5, dt); this.liftS = damp(this.liftS, this.lift, 3, dt);
-      this.zoomS = damp(this.zoomS, this.zoom, 3, dt); this.panS.x = damp(this.panS.x, this.pan.x, 3, dt); this.panS.y = damp(this.panS.y, this.pan.y, 3, dt);
+      const slow = performance.now() < this.glideUntil;                // the entrance is a long, soft glide
+      this.zoomS = damp(this.zoomS, this.zoom, slow ? 1.5 : 6, dt);
+      this.panS.x = damp(this.panS.x, this.pan.x, slow ? 1.5 : 7, dt); this.panS.y = damp(this.panS.y, this.pan.y, slow ? 1.5 : 7, dt);
       if (this.trans) {                                                // eased move between the presets
         const t = this.trans; t.t += dt;
         const k = Math.min(1, t.t / t.dur); this.v = lerp(t.from, t.to, easeInOutCubic(k));
@@ -200,7 +281,9 @@ export class CameraController {
       this.look.copy(this.focusPose.look); this.fov = damp(this.fov, this.fovBase, 3, dt);
     }
     // the flowers lift their faces to the sky as the camera really rises, and stand upright again as it comes down
-    this.faceUp = damp(this.faceUp, smoothstep(36, 70, this.pos.y), 5, dt);
+    const dh = Math.hypot(this.pos.x - this.look.x, this.pos.z - this.look.z), pitch = Math.atan2(this.pos.y - this.look.y, dh);   // how steeply we look down
+    this.faceUp = damp(this.faceUp, smoothstep(rad(30), rad(58), pitch), 5, dt);
+    this.pitch = damp(this.pitch, clamp(pitch, rad(40), rad(82)), 6, dt);
 
     this.camera.position.copy(this.pos); this.camera.lookAt(this.look);
     if (Math.abs(this.camera.fov - this.fov) > 0.01) { this.camera.fov = this.fov; this.camera.updateProjectionMatrix(); }
