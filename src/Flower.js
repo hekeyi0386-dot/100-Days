@@ -185,7 +185,7 @@ export class Flower {
     if (this.hasImage) {
       if (this.textureState === 2) this.inkFade = Math.min(1, this.inkFade + dt * 1.4);
       // awakening: the sketch turns into the photograph. Quick when it is the flower you have just opened (done before the camera arrives).
-      if (this.visited && this.colorState === 2) this.visitFade = this.visitInstant ? 1 : Math.min(1, this.visitFade + dt * (lead ? 1.2 : 0.5));
+      if (this.visited && this.colorState === 2) this.visitFade = this.visitInstant ? 1 : Math.min(1, this.visitFade + dt * (lead ? 3.2 : 0.9));
       const vf = easeOut(this.visitFade), U = this.uni;
       const want0 = lead && field.settled ? 1 : 0;                        // opens once the camera has arrived; closes the moment the day is left
       this.openT += clamp(want0 - this.openT, -dt / 0.5, dt / 0.5);

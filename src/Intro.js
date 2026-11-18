@@ -49,6 +49,15 @@ export class Intro {
     this.onEnter && this.onEnter(mode);
   }
 
+  /* Home: the prelude comes back over the garden; nothing is reloaded and nothing is forgotten */
+  show() {
+    if (this.open) return;
+    this.open = true; this.root.hidden = false; this.root.setAttribute("aria-hidden", "false");
+    this.root.querySelectorAll(".intro-card > *").forEach((el) => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; });   // let it arrive again
+    void this.root.offsetWidth; this.root.classList.remove("leaving");
+    document.body.classList.add("intro-open"); this.setAlt(false);
+  }
+
   skip() {                                         // e.g. someone arriving by the link to a single day
     this.open = false; document.body.classList.remove("intro-open"); this.root.hidden = true;
   }

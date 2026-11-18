@@ -82,3 +82,7 @@ Settings (title, `startDate` that dates every day) are in `config.js`.
 - Opening a flower morphs its round head into a square the same size as the sketch tile on the right (~0.5 s, shader SDF blend); closing reverses it. Both squares share one layout function (`layoutDetail` in `GardenScene.js`).
 - The coloured square is a 640 px crop, `assets/squares/dayNN.webp`, built by `tools/build_garden.py` (small originals are Lanczos-upscaled and lightly sharpened; re-upload a bigger original for Day 3 for real detail).
 - Pollen grains are flat 2–4.5 px discs in two warm tones, only on butterfly hover.
+
+## Home and Reset Garden
+
+Small links bottom-right. **Home** brings the intro back (no reload; visited flowers stay in colour, because they live in `Visits` in memory for the page's lifetime). **Reset Garden** (after a soft confirmation) clears `Visits`, puts every flower back to sleep, resets the camera, then shows the intro.

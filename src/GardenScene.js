@@ -69,7 +69,7 @@ export class GardenScene {
     this.setVisitorMode(this.visitorMode);                                    // the choice made earlier this session, else the butterfly
     this.intro = new Intro({ onEnter: (mode) => this.enterGarden(mode), startOpen: this.visitorMode === "dust" }); if (deepLink) this.intro.skip();
     this.visits.onChange = () => this.updateAwake();
-    document.querySelector("#awake-reset").addEventListener("click", () => this.forget());
+    this.bindExits();
     this.updateAwake();
 
     this.bind(); this.resize(); this.armIdle();
@@ -281,7 +281,34 @@ export class GardenScene {
     this.timeline.setVisited(this.visits.set);
   }
 
-  forget() { this.visits.clear(); this.field.sleepAll(); this.updateAwake(); }
+  /* Home: back to the prelude. Nothing is cleared, so the flowers already woken stay in colour when we come back in. */
+  goHome() {
+    if (this.intro.open) return;
+    if (this.current) { this.closeDay({ fromHistory: true }); history.replaceState(null, "", location.pathname + location.search); }
+    this.field.setHover(null); this.hideTag(); this.pollen.clear();
+    this.controller.locked = true;
+    this.intro.show();
+  }
+
+  /* Reset Garden: every flower asleep again, as if nobody had ever been here, then the prelude */
+  resetGarden() {
+    if (this.current) { this.closeDay({ fromHistory: true }); history.replaceState(null, "", location.pathname + location.search); }
+    this.visits.clear(); this.field.sleepAll(); this.updateAwake();
+    this.field.setHover(null); this.hideTag(); this.pollen.clear();
+    if (this.controller.view !== "top") this.setView("top");
+    this.controller.resetTop();
+    this.goHome();
+  }
+
+  bindExits() {
+    const box = document.querySelector("#confirm"), ask = (on) => { box.hidden = !on; if (on) document.querySelector("#confirm-ok").focus(); };
+    document.querySelector("#go-home").addEventListener("click", () => this.goHome());
+    document.querySelector("#go-reset").addEventListener("click", () => ask(true));
+    document.querySelector("#confirm-cancel").addEventListener("click", () => ask(false));
+    document.querySelector("#confirm-ok").addEventListener("click", () => { ask(false); this.resetGarden(); });
+    box.addEventListener("click", (e) => { if (e.target === box) ask(false); });
+    addEventListener("keydown", (e) => { if (e.key === "Escape" && !box.hidden) { e.stopImmediatePropagation(); ask(false); } }, true);
+  }
 
   currentDay() {
     if (this.current) return this.current.day;

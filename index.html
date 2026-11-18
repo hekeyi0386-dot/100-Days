@@ -7,29 +7,29 @@
 <meta name="description" content="A garden grown from 100 everyday observations: one flower, one frame, one day.">
 <link rel="preload" href="fonts/LavishlyYours-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="fonts/ComicNeue-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="style.css?v=202611181956">
+<link rel="stylesheet" href="style.css?v=202611182019">
 <script type="importmap">
 {
   "imports": {
     "three": "./vendor/three.module.js?v=187",
     "./vendor/three.core.js": "./vendor/three.core.js?v=187",
-    "./src/utils.js": "./src/utils.js?v=202611181956",
-    "./src/layout.js": "./src/layout.js?v=202611181956",
-    "./src/Terrain.js": "./src/Terrain.js?v=202611181956",
-    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611181956",
-    "./src/Flower.js": "./src/Flower.js?v=202611181956",
-    "./src/FlowerField.js": "./src/FlowerField.js?v=202611181956",
-    "./src/CameraController.js": "./src/CameraController.js?v=202611181956",
-    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611181956",
-    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611181956",
-    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611181956",
-    "./src/Pollen.js": "./src/Pollen.js?v=202611181956",
-    "./src/Visits.js": "./src/Visits.js?v=202611181956",
-    "./src/Butterfly.js": "./src/Butterfly.js?v=202611181956",
-    "./src/Intro.js": "./src/Intro.js?v=202611181956",
-    "./src/Dust.js": "./src/Dust.js?v=202611181956",
-    "./src/Visitor.js": "./src/Visitor.js?v=202611181956",
-    "./src/GardenScene.js": "./src/GardenScene.js?v=202611181956"
+    "./src/utils.js": "./src/utils.js?v=202611182019",
+    "./src/layout.js": "./src/layout.js?v=202611182019",
+    "./src/Terrain.js": "./src/Terrain.js?v=202611182019",
+    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611182019",
+    "./src/Flower.js": "./src/Flower.js?v=202611182019",
+    "./src/FlowerField.js": "./src/FlowerField.js?v=202611182019",
+    "./src/CameraController.js": "./src/CameraController.js?v=202611182019",
+    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611182019",
+    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611182019",
+    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611182019",
+    "./src/Pollen.js": "./src/Pollen.js?v=202611182019",
+    "./src/Visits.js": "./src/Visits.js?v=202611182019",
+    "./src/Butterfly.js": "./src/Butterfly.js?v=202611182019",
+    "./src/Intro.js": "./src/Intro.js?v=202611182019",
+    "./src/Dust.js": "./src/Dust.js?v=202611182019",
+    "./src/Visitor.js": "./src/Visitor.js?v=202611182019",
+    "./src/GardenScene.js": "./src/GardenScene.js?v=202611182019"
   }
 }
 </script>
@@ -43,7 +43,17 @@
   <p>100 days of frames</p>
 </header>
 <p class="nowday" id="nowday" aria-live="polite"></p>
-<p class="awake" id="awake" hidden><span id="awake-n"></span><button id="awake-reset" type="button" title="Forget my visits and let the garden sleep again">reset</button></p>
+<p class="awake" id="awake" hidden><span id="awake-n"></span></p>
+<nav class="exits" id="exits" aria-label="Garden">
+  <button type="button" id="go-home" title="Back to the beginning, keeping the flowers you have woken">Home</button>
+  <button type="button" id="go-reset" class="quiet" title="Start the whole garden again">Reset Garden</button>
+</nav>
+<div class="confirm" id="confirm" hidden>
+  <div class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-q">
+    <p id="confirm-q">Reset the garden and wake all flowers from the beginning?</p>
+    <div class="confirm-row"><button type="button" id="confirm-cancel">Cancel</button><button type="button" id="confirm-ok" class="ok">Reset Garden</button></div>
+  </div>
+</div>
 <div class="butterfly" id="butterfly" aria-hidden="true"></div>
 <div class="speck" id="speck" aria-hidden="true"></div>
 
@@ -113,8 +123,8 @@
 
 <div class="nogl" id="nogl"><p></p></div>
 
-<script src="data.js?v=202611181956"></script>
-<script src="config.js?v=202611181956"></script>
-<script type="module" src="./src/main.js?v=202611181956"></script>
+<script src="data.js?v=202611182019"></script>
+<script src="config.js?v=202611182019"></script>
+<script type="module" src="./src/main.js?v=202611182019"></script>
 </body>
 </html>

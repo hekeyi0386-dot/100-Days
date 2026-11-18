@@ -11,5 +11,6 @@ export class Visits {
   has(day) { return this.set.has(day); }
   get size() { return this.set.size; }
   add(day) { if (this.set.has(day)) return false; this.set.add(day); this.onChange && this.onChange(); return true; }
-  clear() { this.set.clear(); this.onChange && this.onChange(); }
+  clear() { try { localStorage.removeItem(OLD_KEY); sessionStorage.removeItem(OLD_KEY); } catch { /* nothing to forget */ }
+    this.set.clear(); this.onChange && this.onChange(); }
 }

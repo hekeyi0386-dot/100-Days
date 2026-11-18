@@ -297,3 +297,21 @@ body.detail-fixed .d-sketch img{height:100%;max-height:none}
 .back:hover::before,.d-nav button:not([disabled]):hover::before,.back:focus-visible::before,.d-nav button:not([disabled]):focus-visible::before{opacity:1;transform:scale(1)}
 .back:focus-visible,.d-nav button:focus-visible{outline:none}
 @media (prefers-reduced-motion:reduce){.back,.d-nav button,.back::before,.d-nav button::before{transition:none}}
+
+/* ---------- leaving the garden: Home (keeps the journey) and Reset Garden (erases it) ---------- */
+.exits{position:fixed;right:clamp(18px,2.8vw,40px);bottom:clamp(26px,4.2vh,42px);display:flex;gap:16px;align-items:baseline;font-size:13px;letter-spacing:.03em;transition:opacity 1.6s ease .5s}
+.exits button{all:unset;cursor:pointer;position:relative;padding:2px 6px;border-radius:99px;color:var(--ink-soft);transition:color .3s,text-shadow .3s}
+.exits button.quiet{opacity:.62;font-size:12px}
+.exits button:hover,.exits button:focus-visible{color:var(--ink);opacity:1;text-shadow:0 0 12px rgba(255,214,112,.55)}
+.exits button.quiet:hover{color:#8a6a55}
+body.intro-open .exits,body.focusing .exits{opacity:0;pointer-events:none;transition-delay:0s}
+.confirm{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(236,236,228,.38);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:confirmIn .3s ease both}
+.confirm[hidden]{display:none}
+.confirm-card{max-width:340px;margin:20px;padding:26px 28px 20px;border-radius:22px;background:rgba(250,249,243,.96);text-align:center;box-shadow:0 18px 60px rgba(70,72,60,.18),inset 0 0 0 1px rgba(255,255,255,.7)}
+.confirm-card p{margin:0 0 20px;font-size:16px;line-height:1.5;color:#4d5062}
+.confirm-row{display:flex;gap:10px;justify-content:center}
+.confirm-row button{all:unset;cursor:pointer;padding:8px 18px 7px;border-radius:99px;font-size:14px;letter-spacing:.03em;color:var(--ink-soft);transition:background .3s,color .3s,box-shadow .3s}
+.confirm-row button:hover,.confirm-row button:focus-visible{color:var(--ink);background:rgba(255,226,138,.35);box-shadow:0 0 14px rgba(255,214,112,.45)}
+.confirm-row .ok{background:rgba(43,47,60,.07)}
+@keyframes confirmIn{from{opacity:0}to{opacity:1}}
+@media (max-width:700px){.exits{bottom:78px;gap:8px;font-size:12px}.exits button.quiet{font-size:11px}}
