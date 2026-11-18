@@ -11,7 +11,7 @@ Existing outputs are kept; pass --rebuild to re-encode everything. Site settings
 """
 import hashlib, json, os, re, sys
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOTAL = 100
@@ -19,10 +19,14 @@ PAT = re.compile(r"^(\d+)\s*([sp])\b.*\.(jpe?g|png|webp)$", re.I)
 
 
 def sketch_to_ink(im):
-    """White paper -> transparent, black ink -> opaque (works for jpeg noise too)."""
+    """White paper -> transparent, black ink -> opaque (works for jpeg noise too).
+    A small source is first enlarged (Lanczos) and only then thresholded, so its outlines stay smooth when it is shown large."""
     L = ImageOps.exif_transpose(im).convert("L")
     if max(L.size) > 900:
         L.thumbnail((900, 900), Image.LANCZOS)
+    elif max(L.size) < 900:
+        k = 900 / max(L.size)
+        L = L.resize((round(L.width * k), round(L.height * k)), Image.LANCZOS)
     a = L.point(lambda v: 0 if v >= 235 else 255 if v <= 40 else int((235 - v) * 255 / 195))
     out = Image.merge("RGBA", [Image.new("L", L.size, 24)] * 3 + [a])
     return out
@@ -30,7 +34,11 @@ def sketch_to_ink(im):
 
 def photo_small(im):
     im = ImageOps.exif_transpose(im).convert("RGB")
-    im.thumbnail((1200, 1200), Image.LANCZOS)
+    if max(im.size) > 1200:
+        im.thumbnail((1200, 1200), Image.LANCZOS)
+    elif max(im.size) < 800:                                   # a tiny original: enlarge it well rather than leave it to the browser
+        k = 1200 / max(im.size)
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=2.0, percent=70, threshold=2))
     return im
 
 
@@ -48,18 +56,15 @@ def flower_head(ink, size=384):
     return out
 
 
-def flower_head_color(photo, size=384):
-    """The same round, feathered head, but from the colour photograph (what a visited flower blooms into)."""
+def square_photo(photo, size=640):
+    """The colour picture as a plain square (the same crop the round head uses, so the circle sits exactly inside it)."""
     im = photo.convert("RGB")
     w, h = im.size; m = min(w, h)
-    top = int((h - m) * 0.4)                                    # crop a touch above centre; faces / subjects sit high
-    im = im.crop(((w - m) // 2, top, (w - m) // 2 + m, top + m)).resize((size, size), Image.LANCZOS).convert("RGBA")
-    yy, xx = np.mgrid[0:size, 0:size]
-    r = np.hypot(xx - (size - 1) / 2, yy - (size - 1) / 2) / (size / 2)
-    feather = np.clip((1.0 - r) / 0.30, 0, 1)
-    feather = feather * feather * (3 - 2 * feather)
-    im.putalpha(Image.fromarray((feather * 255).astype(np.uint8)))
-    return im
+    top = int((h - m) * 0.4)                                    # a touch above centre; subjects sit high
+    im = im.crop(((w - m) // 2, top, (w - m) // 2 + m, top + m))
+    if m < size:
+        return im.resize((size, size), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=1.6, percent=60, threshold=2))
+    return im.resize((size, size), Image.LANCZOS)
 
 
 def tag(path):
@@ -92,9 +97,10 @@ def main(folder, rebuild=False):
             photo_small(Image.open(found[d]["p"])).save(os.path.join(ROOT, p_out), quality=82, method=6)
         if rebuild or not os.path.exists(os.path.join(ROOT, t_out)):
             flower_head(Image.open(os.path.join(ROOT, s_out))).save(os.path.join(ROOT, t_out), quality=88, method=6, alpha_quality=100)
-        hc_out = f"assets/heads/day{d:02d}-color.webp"
-        if rebuild or not os.path.exists(os.path.join(ROOT, hc_out)):
-            flower_head_color(Image.open(os.path.join(ROOT, p_out))).save(os.path.join(ROOT, hc_out), quality=84, method=6, alpha_quality=100)
+        sq_out = f"assets/squares/day{d:02d}.webp"
+        os.makedirs(os.path.join(ROOT, "assets", "squares"), exist_ok=True)
+        if rebuild or not os.path.exists(os.path.join(ROOT, sq_out)):
+            square_photo(Image.open(os.path.join(ROOT, p_out))).save(os.path.join(ROOT, sq_out), quality=84, method=6)
         c = caps.get(str(d), {})
         entries.append({
             "day": d,
@@ -102,7 +108,7 @@ def main(folder, rebuild=False):
             "sketch": f"{s_out}?v={tag(os.path.join(ROOT, s_out))}",
             "photo": f"{p_out}?v={tag(os.path.join(ROOT, p_out))}",
             "head": f"{t_out}?v={tag(os.path.join(ROOT, t_out))}",
-            "headColor": f"{hc_out}?v={tag(os.path.join(ROOT, hc_out))}",
+            "square": f"{sq_out}?v={tag(os.path.join(ROOT, sq_out))}",
             "caption": c.get("caption", ""),
         })
 

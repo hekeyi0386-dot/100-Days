@@ -275,3 +275,25 @@ body.coaching .hint{opacity:0}
 body.has-speck #gl{cursor:none}
 body.has-speck.focusing #gl,body.has-speck.intro-open #gl{cursor:auto}
 @media (prefers-reduced-motion:reduce){.alt-panel,.alt-stack .intro-note{transition:none}.speck .core i{transition:none}}
+
+
+/* =========================================================
+   The open day: a bigger sketch, a panel a little further left, and warm hovers on the three quiet controls
+   ========================================================= */
+
+/* desktop: the panel is wider and sits ~24px further from the edge; its sketch is a square of side --sk (set from one place, in GardenScene.layoutDetail,
+   which also makes the photograph on the left exactly that size) */
+body.detail-fixed .panel{width:var(--panel-w);right:var(--panel-right)}
+body.detail-fixed .d-sketch{width:var(--sk);height:var(--sk);margin-left:auto;margin-right:auto}
+body.detail-fixed .d-sketch img{height:100%;max-height:none}
+
+/* Back to the garden / Previous / Next: no underline, no button chrome; a soft yellow glow wakes behind the words and they grow a hair */
+.back,.d-nav button{position:relative;isolation:isolate;transform-origin:center;text-decoration:none;
+  transition:color .35s ease,transform .45s cubic-bezier(.2,.8,.2,1),text-shadow .45s ease}
+.back::before,.d-nav button::before{content:"";position:absolute;z-index:-1;inset:-7px -16px;border-radius:99px;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,226,138,.7),rgba(255,226,138,.34) 60%,rgba(255,226,138,0));
+  opacity:0;transform:scale(.86);filter:blur(2px);transition:opacity .45s ease,transform .6s cubic-bezier(.2,.8,.2,1)}
+.back:hover,.d-nav button:not([disabled]):hover,.back:focus-visible,.d-nav button:not([disabled]):focus-visible{color:var(--ink);transform:scale(1.045);text-shadow:0 0 14px rgba(255,214,112,.55)}
+.back:hover::before,.d-nav button:not([disabled]):hover::before,.back:focus-visible::before,.d-nav button:not([disabled]):focus-visible::before{opacity:1;transform:scale(1)}
+.back:focus-visible,.d-nav button:focus-visible{outline:none}
+@media (prefers-reduced-motion:reduce){.back,.d-nav button,.back::before,.d-nav button::before{transition:none}}

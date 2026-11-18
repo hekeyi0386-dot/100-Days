@@ -153,11 +153,11 @@ export class GardenScene {
     const t = dust ? {
       walk: coarse ? "Swipe to drift deeper \u00b7 tap a flower to settle" : "Scroll to drift deeper \u00b7 hover a flower \u00b7 click to settle",
       overview: coarse ? "Swipe to drift along the garden \u00b7 tap a flower to settle" : "Scroll to drift along the garden \u00b7 click a flower to settle",
-      top: coarse ? "Drag to drift \u00b7 pinch to draw near \u00b7 tap a flower to settle" : "Drag to drift \u00b7 scroll to draw near \u00b7 pause on a flower to wake it",
+      top: coarse ? "Drag to move left/right \u00b7 pinch to move front/back \u00b7 tap a flower to wake it" : "Drag to move left/right, scroll to move front/back, click to wake it.",
     } : {
       walk: coarse ? "Swipe to flutter deeper \u00b7 tap a flower to land" : "Scroll to flutter deeper \u00b7 hover to visit a flower \u00b7 click to land",
       overview: coarse ? "Swipe to glide along the garden \u00b7 tap a flower to land" : "Scroll to glide along the garden \u00b7 click a flower to land",
-      top: coarse ? "Drag to drift \u00b7 pinch to draw near \u00b7 tap a flower to land" : "Drag to drift \u00b7 scroll to draw near \u00b7 rest on a flower to wake it",
+      top: coarse ? "Drag to move left/right \u00b7 pinch to move front/back \u00b7 tap a flower to wake it" : "Drag to move left/right, scroll to move front/back, click to wake it.",
     };
     this.hint.textContent = t[this.hintView || "top"];
   }
@@ -211,7 +211,7 @@ export class GardenScene {
     const c = this.controller;
     if (this.current || c.mode !== "free" || c.trans || !c.hasPointer || this.intro.open) { if (this.field.hovered) { this.field.setHover(null); this.hideTag(); } return; }
     const f = this.pickNDC(c.pointer);
-    if (this.visitorMode === "butterfly" && f && f.hasImage && f !== this.field.hovered) { const up = this.field.faceUp; this.pollen.burst(f.headPos, f.R * (1 + 0.45 * up), 9, 1 + 1.6 * up); }   // the butterfly arrives: a puff of pollen
+    if (this.visitorMode === "butterfly" && f && f.hasImage && f !== this.field.hovered) { const up = this.field.faceUp; this.pollen.burst(f.headPos, f.R * (1 + 0.45 * up), 6, 1 + 1.6 * up); }   // the butterfly arrives: a puff of pollen
     this.field.setHover(f, ...this.brushDirection());
     if (f) this.showTag(f); else this.hideTag();
     if (!this.visitor.enabled) this.canvas.style.cursor = f && f.hasImage ? "pointer" : "";
@@ -288,7 +288,19 @@ export class GardenScene {
     return clamp(Math.round(1 + this.controller.ps * (this.total - 1)), 1, this.total);   // Day 1 at the entrance, Day 100 at the far end
   }
 
+  /* The open day's layout, defined once. The panel is wider and a little further left than before, and its sketch is a square of side `sk`;
+   * the flower on the left is made exactly that big (CameraController.poseFor), so the photograph and the sketch are twins. */
+  layoutDetail() {
+    const W = innerWidth, H = innerHeight, desktop = W > 760, root = document.documentElement.style;
+    const panelW = Math.min(556, 0.47 * W), right = clamp(0.03 * W, 14, 48) + 24, panelLeft = W - right - panelW;
+    const sk = Math.max(240, Math.min(panelW - 52, 0.56 * H, 520, panelLeft - 56));
+    root.setProperty("--panel-w", panelW.toFixed(0) + "px"); root.setProperty("--panel-right", right.toFixed(0) + "px"); root.setProperty("--sk", sk.toFixed(0) + "px");
+    document.body.classList.toggle("detail-fixed", desktop);
+    this.controller.detail = desktop ? { desktop: true, W, H, panelLeft, sk } : null;
+  }
+
   resize() {
+    this.layoutDetail();
     const w = innerWidth, h = innerHeight, a = w / h;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = a;
@@ -309,13 +321,14 @@ export class GardenScene {
     const now = performance.now(), dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; this.t += dt;
     if (this.intro.open) this.controller.pan.set(Math.sin(this.t * 0.09) * 9, Math.cos(this.t * 0.07) * 3);   // the prelude's backdrop drifts very slowly
     this.controller.update(dt);
+    this.field.settled = this.controller.mode === "focus"; this.camera.getWorldDirection(this.field.viewDir);
     this.field.faceUp = this.controller.faceUp; this.field.topYaw = this.controller.portrait ? 0 : Math.PI / 2; this.field.topPitch = this.controller.pitch; this.field.loadAll = this.controller.v > 0.5;
     this.field.update(this.t, dt, this.camera);
     this.updateFog();
     this.atmosphere.update(this.t);
     this.sky.position.copy(this.camera.position);
     this.hover();
-    this.pollen.update(dt, this.camera, innerHeight);
+    this.pollen.update(dt, this.camera, innerHeight, this.pixelRatio);
     this.updateVisitor(dt);
     const c = this.controller, day = this.currentDay(), z0 = lerp(c.zStart, c.zEnd, c.ps), a = smoothstep(0, 1, Math.min(c.v, 1)), top = smoothstep(1, 2, c.v);
     let lo = clamp(Math.floor(1 + tOfZ(z0 - 4 + 14 * a) * (this.total - 1)), 1, this.total), hi = clamp(Math.ceil(1 + tOfZ(z0 - 105 - 30 * a) * (this.total - 1)), 1, this.total);

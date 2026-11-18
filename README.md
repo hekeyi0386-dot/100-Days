@@ -76,3 +76,9 @@ Text is written in normal capitalisation; there is no `text-transform: uppercase
 4. `python3 tools/bump_version.py` before pushing, so browsers fetch the new files.
 
 Settings (title, `startDate` that dates every day) are in `config.js`.
+
+## Detail view notes
+
+- Opening a flower morphs its round head into a square the same size as the sketch tile on the right (~0.5 s, shader SDF blend); closing reverses it. Both squares share one layout function (`layoutDetail` in `GardenScene.js`).
+- The coloured square is a 640 px crop, `assets/squares/dayNN.webp`, built by `tools/build_garden.py` (small originals are Lanczos-upscaled and lightly sharpened; re-upload a bigger original for Day 3 for real detail).
+- Pollen grains are flat 2–4.5 px discs in two warm tones, only on butterfly hover.

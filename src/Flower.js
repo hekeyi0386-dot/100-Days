@@ -22,20 +22,25 @@ void main(){
 #include <fog_vertex>
 }`;
 const HEAD_FRAG = `uniform sampler2D uInk; uniform sampler2D uColor;
-uniform float uInkIn, uVisit, uHot, uOpacity;
+uniform float uInkIn, uVisit, uHot, uOpacity, uOpen;
 uniform vec3 uPaper, uPaperWarm, uPaperHot;
 varying vec2 vUv;
 #include <fog_pars_fragment>
 void main(){
-  float r = length(vUv * 2.0 - 1.0);
-  float disc = 1.0 - smoothstep(0.982, 1.0, r);                         // a clean round edge
+  vec2 q = abs(vUv * 2.0 - 1.0);
+  float r = length(q);
+  // the head is a circle; opened, it is a square the size of the sketch. In between, the corners grow out of the circle (and, closing, fall back into it)
+  vec2 cw = max(q - (1.0 - 0.06), 0.0);
+  float sd = mix(r - 1.0, length(cw) - 0.06, uOpen);
+  float disc = 1.0 - smoothstep(-0.018, 0.0, sd);                       // a clean edge
   if (disc < 0.01) discard;
   vec3 paper = mix(uPaper, uPaperWarm, uVisit * 0.8);
   paper = mix(paper, uPaperHot, uHot);
   vec4 ink = texture2D(uInk, vUv);
   vec3 sketch = mix(paper, ink.rgb, ink.a * uInkIn * (0.9 + 0.1 * uHot));
   vec4 pic = texture2D(uColor, vUv);
-  float rim = smoothstep(0.0, 0.5, pic.a);                              // the photograph is solid right out to a narrow, soft rim
+  float fe = clamp((1.0 - r) / 0.30, 0.0, 1.0); fe = fe * fe * (3.0 - 2.0 * fe);
+  float rim = mix(smoothstep(0.0, 0.5, fe), 1.0, uOpen) * pic.a;        // the photograph is solid right out to a narrow, soft rim (and to the corners once it is a square)
   vec3 photo = mix(paper, pic.rgb * (1.0 + 0.04 * uHot), rim);
   gl_FragColor = vec4(mix(sketch, photo, uVisit), disc * uOpacity * mix(0.94, 1.0, uVisit));
 #include <colorspace_fragment>
@@ -47,7 +52,7 @@ function makeHeadMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
       uInk: { value: blankTexture() }, uColor: { value: blankTexture() },
-      uInkIn: { value: 0 }, uVisit: { value: 0 }, uHot: { value: 0 }, uOpacity: { value: 1 },
+      uInkIn: { value: 0 }, uVisit: { value: 0 }, uHot: { value: 0 }, uOpacity: { value: 1 }, uOpen: { value: 0 },
       uPaper: { value: PAPER }, uPaperWarm: { value: PAPER_WARM }, uPaperHot: { value: PAPER_HOT },
     }]),
     vertexShader: HEAD_VERT, fragmentShader: HEAD_FRAG, transparent: true, depthWrite: false, fog: true,
@@ -68,6 +73,7 @@ export class Flower {
     // awakening: once visited the sketch gives way to the colour photograph
     // a butterfly's touch: a small tremble that dies away quickly (energy, and the direction it was brushed from)
     this.shake = 0; this.shakeX = 0; this.shakeZ = 1; this.tremble = 1.2 + Math.random();
+    this.openT = 0; this.calm = 0;                                       // how far it has opened into a square (0..1); how still it is (an opened flower does not sway or tremble)
     this.visited = false; this.visitFade = 0; this.visitInstant = false; this.colorState = 0; this.visitApplied = -1;
 
     if (this.hasImage) {
@@ -96,11 +102,11 @@ export class Flower {
     }, undefined, () => { this.textureState = 3; });
   }
 
-  /* the colour head is only fetched once a flower has been visited */
+  /* the colour picture (a plain square) is only fetched once a flower has been visited */
   loadColor(loader, anisotropy) {
-    if (!this.hasImage || this.colorState || !this.entry.headColor) return;
+    if (!this.hasImage || this.colorState || !this.entry.square) return;
     this.colorState = 1;
-    loader.load(this.entry.headColor, (tex) => {
+    loader.load(this.entry.square, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = anisotropy;
       this.uni.uColor.value = tex; this.colorState = 2;
     }, undefined, () => { this.colorState = 3; });
@@ -125,7 +131,8 @@ export class Flower {
     const hv = this.h;
 
     // sway + lean, and the stem leaning gently towards the camera once the flower is "awake"
-    const sway = (Math.sin(t * 0.62 + L.phase) * 0.028 + Math.sin(t * 1.37 + L.phase * 1.7) * 0.012) * wind;
+    this.calm = damp(this.calm, lead ? 1 : 0, 5, dt);
+    const sway = (Math.sin(t * 0.62 + L.phase) * 0.028 + Math.sin(t * 1.37 + L.phase * 1.7) * 0.012) * wind * (1 - this.calm);
     let tx = L.lean * Math.cos(L.leanDir) + sway * Math.cos(L.phase);
     let tz = L.lean * Math.sin(L.leanDir) + sway * Math.sin(L.phase);
     const dx = cam.x - this.base.x, dz = cam.z - this.base.z, dl = Math.hypot(dx, dz) || 1;
@@ -133,6 +140,7 @@ export class Flower {
     // the tremble: two slightly different frequencies so it never sounds like a metronome,
     // a little elliptical, and given more reach when seen from above (where the same angle would hardly show)
     let wob = 0;
+    if (lead) this.shake = 0;                                             // no trembling once a day is open
     if (this.shake > 0.004) {
       this.shake *= Math.exp(-dt * 1.35);
       const amp = this.shake * (0.05 + 0.085 * field.faceUp), ph = L.phase;
@@ -140,7 +148,7 @@ export class Flower {
       tx += amp * (w1 * this.shakeZ + w2 * this.shakeX); tz -= amp * (w1 * this.shakeX - w2 * this.shakeZ);
       wob = this.shake * Math.sin(t * 17 + ph * 1.3);
     } else this.shake = 0;
-    if (field.touch > 0 && hv > 0.5 && (this.tremble -= dt) <= 0) { this.tremble = 1.6 + Math.random() * 1.8; this.nudge(0.16); }   // the butterfly shifts its feet
+    if (field.touch > 0 && !field.focused && hv > 0.5 && (this.tremble -= dt) <= 0) { this.tremble = 1.6 + Math.random() * 1.8; this.nudge(0.16); }   // the butterfly shifts its feet
     _q.setFromEuler(_e.set(tx, 0, tz));
 
     const len = this.stemLen, th = 0.8 + 0.35 * L.scale;
@@ -166,16 +174,24 @@ export class Flower {
     g.position.copy(this.headPos);
     // upright (and turning to you when awake) down on the ground; lifting their faces to the sky from above
     const tb = field.faceUp, hh = hv * (1 - tb);
-    g.rotation.y = lerp(lerp(L.yaw, clamp(face, -1.0, 1.0), hh), field.topYaw, tb);
-    g.rotation.x = lerp(lerp(-0.1, -clamp(rise, -0.3, 0.5), hh), -field.topPitch, tb);       // face the sky as steeply as the camera looks down
+    let fy = clamp(face, -1.0, 1.0), fx = -clamp(rise, -0.3, 0.5);
+    if (lead && field.settled) { const vd = field.viewDir; fy = Math.atan2(-vd.x, -vd.z); fx = Math.asin(clamp(vd.y, -1, 1)); }   // an opened head squares up to the lens, so the square is a true square
+    if (this.fyv === undefined) { this.fyv = fy; this.fxv = fx; }
+    this.fyv = damp(this.fyv, fy, 9, dt); this.fxv = damp(this.fxv, fx, 9, dt);                  // ... and turns there smoothly
+    g.rotation.y = lerp(lerp(L.yaw, this.fyv, hh), field.topYaw, tb);
+    g.rotation.x = lerp(lerp(-0.1, this.fxv, hh), -field.topPitch, tb);                          // face the sky as steeply as the camera looks down
     g.rotation.z = wob * 0.1 * (1 + field.faceUp);                              // the picture itself trembles a little in its plane
-    g.scale.setScalar(this.R * (1 + 0.17 * hv + 0.012 * Math.sin(t * 1.2 + L.phase) + tb * (0.45 + 0.2 * hv)));
+    g.scale.setScalar(this.R * (1 + 0.17 * hv + 0.012 * Math.sin(t * 1.2 + L.phase) * (1 - this.calm) + tb * (0.45 + 0.2 * hv)));
     if (this.hasImage) {
       if (this.textureState === 2) this.inkFade = Math.min(1, this.inkFade + dt * 1.4);
       // awakening: the sketch turns into the photograph. Quick when it is the flower you have just opened (done before the camera arrives).
       if (this.visited && this.colorState === 2) this.visitFade = this.visitInstant ? 1 : Math.min(1, this.visitFade + dt * (lead ? 1.2 : 0.5));
       const vf = easeOut(this.visitFade), U = this.uni;
-      U.uInkIn.value = this.inkFade; U.uVisit.value = vf; U.uHot.value = hv; U.uOpacity.value = this.dim;
+      const want0 = lead && field.settled ? 1 : 0;                        // opens once the camera has arrived; closes the moment the day is left
+      this.openT += clamp(want0 - this.openT, -dt / 0.5, dt / 0.5);
+      const eo = this.openT * this.openT * (3 - 2 * this.openT);
+      U.uInkIn.value = this.inkFade; U.uVisit.value = vf; U.uHot.value = hv; U.uOpacity.value = this.dim; U.uOpen.value = eo;
+      this.open = eo;
       if (vf !== this.visitApplied) { this.visitApplied = vf; field.tintFlower(this, vf); }
       if (lead !== this.lead) {                                           // the flower in focus is drawn last and on top of everything translucent
         this.lead = lead;
@@ -185,7 +201,7 @@ export class Flower {
       const want = tb > 0.5 ? this.shared.ringTex : this.shared.glowTex;      // a soft ring from above, a soft glow on the ground
       if (this.glow.material.map !== want) this.glow.material.map = want;
       this.glow.scale.setScalar(4.4 + 1.5 * tb);
-      this.glow.material.opacity = (0.75 + 0.2 * tb) * hv * (lead ? 0.3 : 1);   // a halo would only pale the picture while you look at it
+      this.glow.material.opacity = (0.75 + 0.2 * tb) * hv * (lead ? 0.3 : 1) * (1 - this.open);   // a halo would only pale the picture while you look at it
     }
   }
 }

@@ -37,7 +37,7 @@ export class CameraController {
     // views: the garden opens as a bird's eye
     this.view = "top"; this.v = 2; this.trans = null; this.faceUp = 1; this.pitch = rad(75);
     // free | in | focus | out
-    this.mode = "free"; this.flight = null; this.focusPose = null;
+    this.mode = "free"; this.flight = null; this.focusPose = null; this.focusFlower = null; this.detail = null;
     this.pos = new THREE.Vector3(); this.look = new THREE.Vector3();
     this.A = makePose(); this.B = makePose(); this.C = makePose(); this.poseFov = 52;
     this._tp = makePose(); this._tc = new THREE.PerspectiveCamera(); this._ray = new THREE.Raycaster(); this._plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.5);
@@ -248,16 +248,28 @@ export class CameraController {
   }
 
   /* ---------- fly to a flower ---------- */
+  /* where the camera stands to look at an opened flower.
+   * Desktop: the flower sits in the middle of the space left of the panel and the head (a square once opened) is exactly as big as the
+   * sketch square on the right; the camera looks straight at it, so that square is not foreshortened. Phones: the head sits above the sheet. */
+  poseFor(flower) {
+    const yaw0 = clamp(flower.layout.yaw * 0.5, -0.3, 0.3), R = flower.R, hp = flower.headPos;
+    const fwd = new THREE.Vector3(Math.sin(yaw0), 0, Math.cos(yaw0)), right = new THREE.Vector3(Math.cos(yaw0), 0, -Math.sin(yaw0));
+    const D = this.detail;
+    if (D && D.desktop) {
+      const tanHalf = Math.tan(rad(this.fovBase / 2)), cx = D.panelLeft / 2, nx = (2 * cx) / D.W - 1;            // nx < 0: left of centre
+      const tanPhi = -nx * tanHalf * this.aspect, cosPhi = 1 / Math.sqrt(1 + tanPhi * tanPhi);
+      const d = (1.17 * R * (D.H / 2)) / ((D.sk / 2) * cosPhi * tanHalf);                                        // 1.17 R = the awake head's half size
+      return { pos: hp.clone().addScaledVector(fwd, d), look: hp.clone().addScaledVector(right, tanPhi * d), fov: this.fovBase };
+    }
+    const d = R * 6.4, pos = hp.clone().addScaledVector(fwd, d); pos.y += R * 0.1;
+    return { pos, look: hp.clone().add(new THREE.Vector3(0, -R * 2.5, 0)), fov: this.fovBase };
+  }
+
   focusOn(flower, dur) {
     if (this.trans) { this.v = this.trans.to; this.trans = null; }
-    const yaw0 = clamp(flower.layout.yaw * 0.5, -0.3, 0.3), R = flower.R, d = R * (this.mobile ? 6.4 : 4.4);
-    const fwd = new THREE.Vector3(Math.sin(yaw0), 0, Math.cos(yaw0)), right = new THREE.Vector3(Math.cos(yaw0), 0, -Math.sin(yaw0));
-    const hp = flower.headPos.clone();
-    const pos = hp.clone().addScaledVector(fwd, d); pos.y += R * 0.1;
-    const look = this.mobile ? hp.clone().add(new THREE.Vector3(0, -R * 2.5, 0)) : hp.clone().addScaledVector(right, R * 1.2);
-    this.focusPose = { pos, look, fov: this.fovBase };
+    this.focusFlower = flower; this.focusPose = this.poseFor(flower);
     const fromHigh = this.v > 0.6;
-    this.startFlight(() => this.focusPose, dur || (fromHigh ? 2.3 : 1.7), fromHigh ? 0 : 1.4, () => { this.mode = "focus"; });
+    this.startFlight(() => (this.focusPose = this.poseFor(flower)), dur || (fromHigh ? 2.3 : 1.7), fromHigh ? 0 : 1.4, () => { this.mode = "focus"; });
     this.mode = "in";
   }
 
@@ -292,7 +304,8 @@ export class CameraController {
       this.look.lerpVectors(f.fromLook, to.look, e);
       this.fov = damp(this.fov, to.fov, 3, dt);
       if (k >= 1) { this.flight = null; this.pos.copy(to.pos); this.look.copy(to.look); f.done && f.done(); }
-    } else if (this.mode === "focus" && this.focusPose) {
+    } else if (this.mode === "focus" && this.focusFlower) {
+      this.focusPose = this.poseFor(this.focusFlower);                       // an opened flower is still, so this is a fixed place (and follows a resize)
       this.pos.copy(this.focusPose.pos); this.pos.x += this.mxS * 0.22; this.pos.y += this.myS * 0.12;   // a hair of parallax while reading
       this.look.copy(this.focusPose.look); this.fov = damp(this.fov, this.fovBase, 3, dt);
     }

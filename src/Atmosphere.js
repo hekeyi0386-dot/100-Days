@@ -5,11 +5,10 @@ import { terrainHeight, pathX } from "./layout.js";
 import { FOG_COLOR } from "./Terrain.js";
 import { hash } from "./utils.js";
 
-function softDot() {
+// a flat little disc with a clean edge (the old one was a radial gradient, i.e. a glowing blob)
+function grain() {
   const c = document.createElement("canvas"); c.width = c.height = 64;
-  const g = c.getContext("2d"), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.4, "rgba(255,255,255,.45)"); r.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.beginPath(); g.arc(32, 32, 28, 0, Math.PI * 2); g.fill();
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
@@ -48,7 +47,7 @@ export function createAtmosphere(scene, { mobile }) {
   }
   const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pts, 3));
   const motes = new THREE.Points(geo, new THREE.PointsMaterial({
-    size: 0.5, map: softDot(), color: 0xf3d58c, transparent: true, opacity: 0.85, depthWrite: false, sizeAttenuation: true,
+    size: 0.26, map: grain(), color: 0xe9c565, transparent: true, opacity: 0.72, depthWrite: false, sizeAttenuation: true, alphaTest: 0.3,
   }));
   motes.frustumCulled = false; scene.add(motes);
 

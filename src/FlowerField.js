@@ -31,6 +31,8 @@ function leafShape() {
 export class FlowerField {
   constructor(entries, total, { mobile, anisotropy = 4, visits }) {
     this.group = new THREE.Group(); this.anisotropy = anisotropy; this.mobile = mobile; this.visits = visits; this.pollen = null; this.emitAcc = 0;
+    this.viewDir = new THREE.Vector3(0, 0, -1);                         // which way the camera looks
+    this.settled = false;                                             // true while the camera rests on the opened flower
     this.touch = 1;                                                   // 1 = a butterfly (brushes, stirs, pollinates); 0 = a speck of dust (the flower only wakes)
     const byDay = new Map(entries.map((e) => [e.day, e]));
     const layout = layoutFlowers(total, { narrow: mobile && matchMedia("(max-aspect-ratio: 1/1)").matches });
@@ -177,7 +179,7 @@ export class FlowerField {
     this.leaves.material.opacity = 1 - 0.85 * up; this.leaves.material.transparent = up > 0.02; this.leaves.material.depthWrite = up < 0.5;
     this.seedlings.visible = up < 0.98; this.seedHeads.material.opacity = 0.8 * (1 - up);
     if (this.touch > 0 && this.hovered && this.hovered.hasImage && this.pollen) {             // a gentle trickle of pollen while the butterfly visits
-      this.emitAcc += dt * 14; const h = this.hovered;
+      this.emitAcc += dt * 8; const h = this.hovered;
       while (this.emitAcc >= 1) { this.emitAcc -= 1; this.pollen.burst(h.headPos, h.R * (1 + 0.45 * up), 1, 1 + 1.6 * up); }
     }
     for (const f of this.flowers) if (f.visited && !f.colorState && f.textureState === 2) f.loadColor(this.loader, this.anisotropy);
