@@ -15,7 +15,7 @@ export class DayOverlay {
 
   show({ entry, date, hasPrev, hasNext }) {
     const { el } = this, token = ++this.token;
-    el.day.textContent = "DAY " + pad3(entry.day);
+    el.day.textContent = "Day " + pad3(entry.day);
     el.date.textContent = date || ""; el.date.hidden = !date;
     el.title.textContent = entry.title || ""; el.title.hidden = !entry.title;
     el.note.textContent = entry.caption || ""; el.note.hidden = !entry.caption;

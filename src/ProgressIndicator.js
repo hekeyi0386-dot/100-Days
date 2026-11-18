@@ -23,10 +23,10 @@ export class ProgressIndicator {
 
   update(day, lo, hi, hoverDay, all) {
     if (all !== this.last.all) { this.last.all = all; this.last.day = -1; }
-    if (all) { this.big.innerHTML = "ALL " + this.total + " <i>DAYS</i>"; this.label.textContent = ""; }
+    if (all) { this.big.innerHTML = "All " + this.total + " <i>days</i>"; this.label.textContent = ""; }
     else if (day !== this.last.day) {
       this.last.day = day; this.label.textContent = "Day " + pad2(day);
-      this.big.innerHTML = "DAY " + pad3(day) + " <i>/ " + this.total + "</i>";
+      this.big.innerHTML = "Day " + pad3(day) + " <i>/ " + this.total + "</i>";
       this.marker.style.left = ((day - 0.5) / this.total) * 100 + "%";
     }
     if (lo !== this.last.lo || hi !== this.last.hi) {

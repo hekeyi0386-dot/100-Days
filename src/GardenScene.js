@@ -205,7 +205,7 @@ export class GardenScene {
     const dist = f.headPos.distanceTo(this.camera.position), rpx = (f.R / dist) / Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * (innerHeight / 2) * 1.17;
     if (tag.dataset.day !== String(f.day)) {
       tag.dataset.day = String(f.day);
-      tag.querySelector(".t-day").textContent = "DAY " + pad3(f.day);
+      tag.querySelector(".t-day").textContent = "Day " + pad3(f.day);
       tag.querySelector(".t-date").textContent = this.dateOf(f.day);
       const title = f.entry && f.entry.title;
       tag.querySelector(".t-title").textContent = f.hasImage ? (title ? `“${title}”` : "") : "Still to come";
