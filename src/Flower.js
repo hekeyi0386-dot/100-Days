@@ -140,7 +140,7 @@ export class Flower {
       tx += amp * (w1 * this.shakeZ + w2 * this.shakeX); tz -= amp * (w1 * this.shakeX - w2 * this.shakeZ);
       wob = this.shake * Math.sin(t * 17 + ph * 1.3);
     } else this.shake = 0;
-    if (hv > 0.5 && (this.tremble -= dt) <= 0) { this.tremble = 1.6 + Math.random() * 1.8; this.nudge(0.16); }   // the butterfly shifts its feet
+    if (field.touch > 0 && hv > 0.5 && (this.tremble -= dt) <= 0) { this.tremble = 1.6 + Math.random() * 1.8; this.nudge(0.16); }   // the butterfly shifts its feet
     _q.setFromEuler(_e.set(tx, 0, tz));
 
     const len = this.stemLen, th = 0.8 + 0.35 * L.scale;

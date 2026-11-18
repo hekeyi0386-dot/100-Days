@@ -31,6 +31,7 @@ function leafShape() {
 export class FlowerField {
   constructor(entries, total, { mobile, anisotropy = 4, visits }) {
     this.group = new THREE.Group(); this.anisotropy = anisotropy; this.mobile = mobile; this.visits = visits; this.pollen = null; this.emitAcc = 0;
+    this.touch = 1;                                                   // 1 = a butterfly (brushes, stirs, pollinates); 0 = a speck of dust (the flower only wakes)
     const byDay = new Map(entries.map((e) => [e.day, e]));
     const layout = layoutFlowers(total, { narrow: mobile && matchMedia("(max-aspect-ratio: 1/1)").matches });
 
@@ -127,7 +128,8 @@ export class FlowerField {
     if (flower === this.hovered) return;
     this.hovered = flower; this.refreshStates();
     if (!flower) return;
-    flower.nudge(0.7, dirX, dirZ);                                    // the butterfly brushes it ...
+    if (this.touch <= 0) return;                                      // dust passes without touching anything
+    flower.nudge(0.7 * this.touch, dirX, dirZ);                       // the butterfly brushes it ...
     const reach = flower.R * 3.4;                                       // ... and the air it moves stirs its neighbours, just a little
     for (const f of this.flowers) {
       if (f === flower) continue;
@@ -174,7 +176,7 @@ export class FlowerField {
     this.stems.material.opacity = 1 - 0.9 * up; this.stems.material.transparent = up > 0.02; this.stems.material.depthWrite = up < 0.5;
     this.leaves.material.opacity = 1 - 0.85 * up; this.leaves.material.transparent = up > 0.02; this.leaves.material.depthWrite = up < 0.5;
     this.seedlings.visible = up < 0.98; this.seedHeads.material.opacity = 0.8 * (1 - up);
-    if (this.hovered && this.hovered.hasImage && this.pollen) {             // a gentle trickle of pollen while the butterfly visits
+    if (this.touch > 0 && this.hovered && this.hovered.hasImage && this.pollen) {             // a gentle trickle of pollen while the butterfly visits
       this.emitAcc += dt * 14; const h = this.hovered;
       while (this.emitAcc >= 1) { this.emitAcc -= 1; this.pollen.burst(h.headPos, h.R * (1 + 0.45 * up), 1, 1 + 1.6 * up); }
     }

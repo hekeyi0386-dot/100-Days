@@ -28,13 +28,19 @@ export class Butterfly {
   constructor() {
     this.el = document.querySelector("#butterfly"); this.el.innerHTML = butterflySvg("cur");
     this.x = innerWidth / 2; this.y = innerHeight / 2; this.vx = 0; this.vy = 0; this.rot = 0; this.t = 0;
-    this.shown = false; this.enabled = matchMedia("(pointer:fine)").matches;
-    document.body.classList.toggle("has-butterfly", this.enabled);
+    this.shown = false; this.mounted = false; this.enabled = matchMedia("(pointer:fine)").matches;
+  }
+
+  /* switch the butterfly on or off (the other mode's cursor takes its place) */
+  mount(on) {
+    this.mounted = !!on && this.enabled;
+    document.body.classList.toggle("has-butterfly", this.mounted);
+    if (!this.mounted) { this.shown = false; this.el.classList.remove("on", "perched"); }
   }
 
   /* pointer: {x,y} in px or null; perch: {x,y} where the hovered flower's rim is, or null */
   update(dt, pointer, perch, active) {
-    if (!this.enabled) return;
+    if (!this.mounted) return;
     const show = !!pointer && active;
     if (show !== this.shown) { this.shown = show; this.el.classList.toggle("on", show); if (show) { this.x = pointer.x; this.y = pointer.y; } }
     if (!show) return;

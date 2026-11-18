@@ -2,7 +2,8 @@
  *   GardenScene
  *   ├─ Intro               the prelude: you are a butterfly, entering the garden
  *   ├─ CameraController    bird's eye (default, zoom + pan) / overview / walk; click to land on a flower
- *   ├─ Butterfly / Pollen  the visitor, and what it stirs up on the flowers it visits
+ *   ├─ Butterfly | Dust    the visitor (a butterfly by default, or a speck of dust), and what it stirs up on the flowers it visits
+ *   ├─ Pollen
  *   ├─ Visits              which flowers have been awakened into colour (kept in localStorage)
  *   ├─ Terrain / Sky / Hills
  *   ├─ Atmosphere          light, fog, grass, motes
@@ -20,6 +21,8 @@ import { ViewSwitcher } from "./ViewSwitcher.js";
 import { Pollen } from "./Pollen.js";
 import { Visits } from "./Visits.js";
 import { Butterfly } from "./Butterfly.js";
+import { Dust } from "./Dust.js";
+import { readVisitorMode, writeVisitorMode } from "./Visitor.js";
 import { Intro } from "./Intro.js";
 import { tOfZ, zOfT } from "./layout.js";
 import { clamp, lerp, pad3, smoothstep } from "./utils.js";
@@ -61,8 +64,10 @@ export class GardenScene {
     this.current = null; this.last = performance.now(); this.frames = 0; this.slow = 0; this.t = 0;
     this.hintMoved = 0; this.idleTimer = 0;
     this.fog = this.scene.fog; this.viewChanged("top", true);
-    this.butterfly = new Butterfly();
-    this.intro = new Intro({ onEnter: () => this.enterGarden() }); if (deepLink) this.intro.skip();
+    this.butterfly = new Butterfly(); this.speck = new Dust();
+    this.visitorMode = readVisitorMode(); this.visitor = this.butterfly;
+    this.setVisitorMode(this.visitorMode);                                    // the choice made earlier this session, else the butterfly
+    this.intro = new Intro({ onEnter: (mode) => this.enterGarden(mode), startOpen: this.visitorMode === "dust" }); if (deepLink) this.intro.skip();
     this.visits.onChange = () => this.updateAwake();
     document.querySelector("#awake-reset").addEventListener("click", () => this.forget());
     this.updateAwake();
@@ -136,15 +141,25 @@ export class GardenScene {
   viewChanged(name, initial = false) {
     this.views.setActive(name);
     for (const n of ["walk", "overview", "top"]) document.body.classList.toggle("view-" + n, n === name);
-    const coarse = matchMedia("(pointer:coarse)").matches;
-    this.hint.textContent = {
-      walk: coarse ? "Swipe to flutter deeper \u00b7 tap a flower to land" : "Scroll to flutter deeper \u00b7 hover to visit a flower \u00b7 click to land",
-      overview: coarse ? "Swipe to glide along the garden \u00b7 tap a flower to land" : "Scroll to glide along the garden \u00b7 click a flower to land",
-      top: coarse ? "Drag to drift \u00b7 pinch to draw near \u00b7 tap a flower to land" : "Drag to drift \u00b7 scroll to draw near \u00b7 rest on a flower to wake it",
-    }[name];
+    this.hintView = name; this.writeHint();
     this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle();
     clearTimeout(this.hintFade);
     if (!initial) this.hintFade = setTimeout(() => this.hint.classList.add("gone"), 6500);
+  }
+
+  // the hint speaks in the visitor's own terms (a butterfly flutters and lands; a speck of dust drifts and settles)
+  writeHint() {
+    const coarse = matchMedia("(pointer:coarse)").matches, dust = this.visitorMode === "dust";
+    const t = dust ? {
+      walk: coarse ? "Swipe to drift deeper \u00b7 tap a flower to settle" : "Scroll to drift deeper \u00b7 hover a flower \u00b7 click to settle",
+      overview: coarse ? "Swipe to drift along the garden \u00b7 tap a flower to settle" : "Scroll to drift along the garden \u00b7 click a flower to settle",
+      top: coarse ? "Drag to drift \u00b7 pinch to draw near \u00b7 tap a flower to settle" : "Drag to drift \u00b7 scroll to draw near \u00b7 pause on a flower to wake it",
+    } : {
+      walk: coarse ? "Swipe to flutter deeper \u00b7 tap a flower to land" : "Scroll to flutter deeper \u00b7 hover to visit a flower \u00b7 click to land",
+      overview: coarse ? "Swipe to glide along the garden \u00b7 tap a flower to land" : "Scroll to glide along the garden \u00b7 click a flower to land",
+      top: coarse ? "Drag to drift \u00b7 pinch to draw near \u00b7 tap a flower to land" : "Drag to drift \u00b7 scroll to draw near \u00b7 rest on a flower to wake it",
+    };
+    this.hint.textContent = t[this.hintView || "top"];
   }
 
   // up high the haze steps back, so the whole field stays crisp
@@ -196,10 +211,10 @@ export class GardenScene {
     const c = this.controller;
     if (this.current || c.mode !== "free" || c.trans || !c.hasPointer || this.intro.open) { if (this.field.hovered) { this.field.setHover(null); this.hideTag(); } return; }
     const f = this.pickNDC(c.pointer);
-    if (f && f.hasImage && f !== this.field.hovered) { const up = this.field.faceUp; this.pollen.burst(f.headPos, f.R * (1 + 0.45 * up), 9, 1 + 1.6 * up); }   // the butterfly arrives: a puff of pollen
+    if (this.visitorMode === "butterfly" && f && f.hasImage && f !== this.field.hovered) { const up = this.field.faceUp; this.pollen.burst(f.headPos, f.R * (1 + 0.45 * up), 9, 1 + 1.6 * up); }   // the butterfly arrives: a puff of pollen
     this.field.setHover(f, ...this.brushDirection());
     if (f) this.showTag(f); else this.hideTag();
-    if (!this.butterfly.enabled) this.canvas.style.cursor = f && f.hasImage ? "pointer" : "";
+    if (!this.visitor.enabled) this.canvas.style.cursor = f && f.hasImage ? "pointer" : "";
   }
 
   showTag(f) {
@@ -219,7 +234,7 @@ export class GardenScene {
     if (x + w > innerWidth - 12) x = (v.x * 0.5 + 0.5) * innerWidth - rpx - 14 - w;
     tag.style.transform = `translate3d(${x.toFixed(0)}px,${clamp(y - h / 2, 10, innerHeight - h - 10).toFixed(0)}px,0)`;
   }
-  hideTag() { this.tag.classList.remove("show"); this.tag.dataset.day = ""; if (!this.butterfly.enabled) this.canvas.style.cursor = ""; }
+  hideTag() { this.tag.classList.remove("show"); this.tag.dataset.day = ""; if (!this.visitor.enabled) this.canvas.style.cursor = ""; }
 
   /* ---------- the butterfly, and the garden's memory ---------- */
   // which way the butterfly has been moving, as a direction on the ground (used to push a flower the way it was brushed)
@@ -237,15 +252,27 @@ export class GardenScene {
     return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, r, behind: v.z > 1 };
   }
 
-  updateButterfly(dt) {
+  updateVisitor(dt) {
     const c = this.controller, active = !this.current && !this.intro.open && c.mode === "free" && c.hasPointer;
     const pointer = c.hasPointer ? { x: (c.pointer.x * 0.5 + 0.5) * innerWidth, y: (-c.pointer.y * 0.5 + 0.5) * innerHeight } : null;
     let perch = null; const h = this.field.hovered;
     if (active && h && h.hasImage) { const s = this.headScreen(h); if (!s.behind) perch = { x: s.x, y: s.y - s.r * 0.7 }; }   // it lands on the rim of the flower it visits
-    this.butterfly.update(dt, pointer, perch, active);
+    this.visitor.update(dt, pointer, this.visitorMode === "butterfly" ? perch : (perch ? {} : null), active);   // a butterfly lands on the rim; dust just brightens a little
   }
 
-  enterGarden() { this.controller.enter(); this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle(); }
+  /* who is visiting: the same garden and camera either way; the mode only picks the companion, and what it stirs */
+  setVisitorMode(mode) {
+    this.visitorMode = mode === "dust" ? "dust" : "butterfly";
+    writeVisitorMode(this.visitorMode);
+    document.body.dataset.visitor = this.visitorMode;
+    this.visitor = this.visitorMode === "dust" ? this.speck : this.butterfly;
+    this.butterfly.mount(this.visitorMode === "butterfly"); this.speck.mount(this.visitorMode === "dust");
+    this.field.touch = this.visitorMode === "butterfly" ? 1 : 0;
+    this.pollen.clear();
+    if (this.hintView) this.writeHint();
+  }
+
+  enterGarden(mode = "butterfly") { this.setVisitorMode(mode); this.controller.enter(); this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle(); }
 
   updateAwake() {
     const n = [...this.visits.set].filter((d) => this.field.byDay.get(d) && this.field.byDay.get(d).hasImage).length;
@@ -289,7 +316,7 @@ export class GardenScene {
     this.sky.position.copy(this.camera.position);
     this.hover();
     this.pollen.update(dt, this.camera, innerHeight);
-    this.updateButterfly(dt);
+    this.updateVisitor(dt);
     const c = this.controller, day = this.currentDay(), z0 = lerp(c.zStart, c.zEnd, c.ps), a = smoothstep(0, 1, Math.min(c.v, 1)), top = smoothstep(1, 2, c.v);
     let lo = clamp(Math.floor(1 + tOfZ(z0 - 4 + 14 * a) * (this.total - 1)), 1, this.total), hi = clamp(Math.ceil(1 + tOfZ(z0 - 105 - 30 * a) * (this.total - 1)), 1, this.total);
     if (top > 0.5) { lo = 1; hi = this.total; }                       // from above, every day is in view

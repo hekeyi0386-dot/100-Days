@@ -14,6 +14,11 @@ You are a butterfly entering the garden. Every flower holds one day; where you l
   (a link to a single day, `#day-27`, skips it).
 - **You open on the bird's eye**: all 100 days at once, laid out as twelve small constellations (rings, crescents, spirals,
   sunflower-like clusters) along one winding path, joined by faint threads like a star map. Day 1 is on the left, day 100 on the right.
+- **A quieter way in: dust.** Under the button, a small, low-contrast line (*Prefer another way to explore?*) opens a sentence and a link,
+  *Explore as Dust*. The same garden and camera, with a different companion: a tiny soft warm-white speck with a barely-there trace, no wings,
+  no landing, no pollen and no trembling (the flower still wakes, glows and turns to colour when you settle on it). The main button always means
+  butterfly. The choice (`visitorMode`: `"butterfly"` or `"dust"`) is kept for the browser session in `sessionStorage`
+  (`keyis-garden:visitorMode`); `src/Visitor.js` reads and writes it, `src/Dust.js` is the speck, and `GardenScene.setVisitorMode()` applies it.
 - **Your cursor is a butterfly** (mouse only). It flutters after the pointer, beats its wings faster while travelling, and lands on the
   flower you hover; the flower answers with a ring of light and a little pollen.
 - **Click a flower to land on it.** The camera descends and the day opens in two halves: on the left the flower itself, its head turned into the
@@ -44,7 +49,8 @@ day, and "Back to the garden" returns you to the view you left. `Esc` steps back
 | `main.js` | boots the scene, WebGL fallback |
 | `GardenScene.js` | assembles everything, hover / click, UI wiring, adaptive resolution |
 | `Intro.js` | the prelude page |
-| `Butterfly.js`, `Pollen.js` | the butterfly cursor, and the pollen it stirs up |
+| `Butterfly.js`, `Dust.js`, `Pollen.js` | the two possible visitors (butterfly cursor / speck of dust), and the pollen a butterfly stirs up |
+| `Visitor.js` | the chosen visitor mode, kept for the session |
 | `Visits.js` | which flowers have been awakened (localStorage) |
 | `layout.js` | where each day lives: twelve constellations (ring / arc / spiral / cluster) along a winding path, two clearings; terrain height |
 | `FlowerField.js` | maps the day data onto `Flower`s, instanced stems / leaves / shadows / seedlings, lazy texture loading |
