@@ -63,7 +63,7 @@ Three.js r187 is vendored in `vendor/` (MIT, no npm needed).
 
 ## Typography
 Two local fonts, both SIL Open Font License, loaded with `@font-face` from `fonts/` (no Google Fonts, no CDN):
-- **Mystery Quest** (`fonts/MysteryQuest-Regular.ttf`, `--display`): the way-in title and button, the top-left signature, the day's title.
+- **Lavishly Yours** (`fonts/LavishlyYours-Regular.ttf`, `--display`): the way-in title and button, the top-left signature, the day's title.
 - **Comic Neue** (`fonts/ComicNeue-Regular.ttf`, `--body`): everything that is read or used: notes, dates, hints, buttons, the timeline.
 Neither has bold, italic or arrow glyphs, so `font-synthesis: none` is set (no faked styles) and the arrows are small inline SVGs.
 Text is written in normal capitalisation; there is no `text-transform: uppercase` anywhere.
