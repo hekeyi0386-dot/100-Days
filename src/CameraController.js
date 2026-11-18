@@ -43,6 +43,8 @@ export class CameraController {
     this._tp = makePose(); this._tc = new THREE.PerspectiveCamera(); this._ray = new THREE.Raycaster(); this._plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.5);
 
     this.onTap = null; this.onActivity = null; this.onViewChange = null; this.locked = false;
+    // sideways swipes on the trackpad do not turn the view (that takes click-and-drag): notice when someone keeps trying
+    this.swipe = { sum: 0, last: 0, ends: [] }; this.hintReadyAt = 0; this.hintCount = 0; this.learnedDrag = false; this.onSwipeHint = null;
     this.computePose(this.v, this.pos, this.look);
     this.bind();
   }
@@ -170,7 +172,8 @@ export class CameraController {
         else if (e.altKey) this.panBy(0, -dy * k * upp);                                      // Alt + wheel: drift up / down
         else { if (dx) this.panBy(dx * k * upp * 0.8, 0); if (!dx || Math.abs(e.deltaY) > 0) this.zoomAt(Math.exp(e.deltaY * k * 0.0012), nx, ny); }
       } else if (e.shiftKey || e.altKey) this.lift = clamp(this.lift + dy * k * 0.0011, 0, 1);   // limited vertical control
-      else this.p = clamp(this.p + (dy + dx) * k * 0.00019, 0, 1);
+      else if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.3 && Math.abs(e.deltaX) > 2) this.noteSwipe(e.deltaX * k, e.timeStamp);   // a sideways swipe moves nothing, so it must not move us forward or back
+      else this.p = clamp(this.p + dy * k * 0.00019, 0, 1);
       this.onActivity && this.onActivity();
     }, { passive: false });
 
@@ -215,6 +218,7 @@ export class CameraController {
       if (this.view === "top") {                                       // drag the garden under you
         const upp = this.unitsPerPixel(); this.pan.x -= dx * upp; this.pan.y += dy * upp; this.clampPan();
       } else {
+        this.learnedDrag = true;
         this.yaw = clamp(this.yaw - dx * (down.touch ? 0.0042 : 0.0034), -0.55, 0.55);
         if (down.touch) this.p = clamp(this.p - dy * 0.0007, 0, 1);
         else this.lift = clamp(this.lift - dy * 0.004, 0, 1);          // vertical drag lifts the camera a little
@@ -229,6 +233,18 @@ export class CameraController {
     d.addEventListener("pointerup", lift);
     d.addEventListener("pointercancel", (e) => { pts.delete(e.pointerId); pinch = null; down = null; });
     d.addEventListener("pointerleave", (e) => { if (e.pointerType !== "touch") { this.hasPointer = false; this.mx = 0; this.my = 0; } });
+  }
+
+  /* Count sideways swipes (a swipe = a burst of wheel events). Two real attempts within a few seconds, from someone who has
+   * not yet dragged to turn the view, earn one quiet hint; then it rests for a while and appears at most three times. */
+  noteSwipe(dx, at) {
+    const s = this.swipe, now = at || performance.now();                  // the moment of the gesture itself, not of the (possibly late) handler
+    if (now - s.last > 160) { if (s.sum >= 60) s.ends.push(s.last); s.sum = 0; }          // a new swipe begins
+    s.sum += Math.abs(dx); s.last = now; s.ends = s.ends.filter((t) => now - t < 7000);
+    if (!this.learnedDrag && s.sum >= 60 && s.ends.length >= 1 && now >= this.hintReadyAt && this.hintCount < 3) {
+      this.hintReadyAt = now + 25000; this.hintCount++; s.ends = []; s.sum = 0;
+      this.onSwipeHint && this.onSwipeHint();
+    }
   }
 
   /* ---------- fly to a flower ---------- */

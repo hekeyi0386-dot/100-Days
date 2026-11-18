@@ -5,21 +5,23 @@
 export const butterflySvg = (id) => `
 <svg viewBox="0 0 64 52" aria-hidden="true">
   <defs>
-    <linearGradient id="${id}w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b4f5e"/><stop offset=".62" stop-color="#7d8190"/><stop offset="1" stop-color="#d9d6ca"/></linearGradient>
-    <linearGradient id="${id}l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a6e7c"/><stop offset="1" stop-color="#e7e3d6"/></linearGradient>
+    <linearGradient id="${id}w" x1="0.95" y1="0.9" x2="0.05" y2="0.05"><stop offset="0" stop-color="#d9a233"/><stop offset=".5" stop-color="#eec55f"/><stop offset="1" stop-color="#fbeab0"/></linearGradient>
+    <linearGradient id="${id}l" x1="0.95" y1="0.1" x2="0.1" y2="0.95"><stop offset="0" stop-color="#e3b244"/><stop offset=".6" stop-color="#f3d27a"/><stop offset="1" stop-color="#fcf0c4"/></linearGradient>
   </defs>
   <g class="wing wl"><g>
-    <path d="M32 24 C24 4 6 2 3 14 C1 24 14 30 32 28 Z" fill="url(#${id}w)" opacity=".92"/>
-    <path d="M32 28 C18 29 10 38 15 46 C20 51 29 42 32 31 Z" fill="url(#${id}l)" opacity=".9"/>
-    <path d="M31 25 C22 14 12 11 6 15 M31 27 C21 24 12 22 5 18" stroke="#fff" stroke-opacity=".35" fill="none" stroke-width=".7"/>
+    <path d="M32 24 C24 4 6 2 3 14 C1 24 14 30 32 28 Z" fill="url(#${id}w)" opacity=".96"/>
+    <path d="M32 28 C18 29 10 38 15 46 C20 51 29 42 32 31 Z" fill="url(#${id}l)" opacity=".94"/>
+    <path d="M32 24 C24 4 6 2 3 14 C1 24 14 30 32 28 Z M32 28 C18 29 10 38 15 46 C20 51 29 42 32 31 Z" fill="none" stroke="#a9792a" stroke-opacity=".42" stroke-width=".6"/>
+    <path d="M31 25 C22 14 12 11 6 15 M31 27 C21 24 12 22 5 18" stroke="#fff8e0" stroke-opacity=".55" fill="none" stroke-width=".7"/>
   </g></g>
   <g class="wing wr"><g transform="translate(64 0) scale(-1 1)">
-    <path d="M32 24 C24 4 6 2 3 14 C1 24 14 30 32 28 Z" fill="url(#${id}w)" opacity=".92"/>
-    <path d="M32 28 C18 29 10 38 15 46 C20 51 29 42 32 31 Z" fill="url(#${id}l)" opacity=".9"/>
-    <path d="M31 25 C22 14 12 11 6 15 M31 27 C21 24 12 22 5 18" stroke="#fff" stroke-opacity=".35" fill="none" stroke-width=".7"/>
+    <path d="M32 24 C24 4 6 2 3 14 C1 24 14 30 32 28 Z" fill="url(#${id}w)" opacity=".96"/>
+    <path d="M32 28 C18 29 10 38 15 46 C20 51 29 42 32 31 Z" fill="url(#${id}l)" opacity=".94"/>
+    <path d="M32 24 C24 4 6 2 3 14 C1 24 14 30 32 28 Z M32 28 C18 29 10 38 15 46 C20 51 29 42 32 31 Z" fill="none" stroke="#a9792a" stroke-opacity=".42" stroke-width=".6"/>
+    <path d="M31 25 C22 14 12 11 6 15 M31 27 C21 24 12 22 5 18" stroke="#fff8e0" stroke-opacity=".55" fill="none" stroke-width=".7"/>
   </g></g>
-  <path d="M32 18 C33.2 24 33.2 34 32 42" stroke="#3b3f4c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-  <path d="M32 18 C30 11 26 8 23 8 M32 18 C34 11 38 8 41 8" stroke="#3b3f4c" stroke-width=".9" stroke-linecap="round" fill="none"/>
+  <path d="M32 18 C33.2 24 33.2 34 32 42" stroke="#5b4527" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M32 18 C30 11 26 8 23 8 M32 18 C34 11 38 8 41 8" stroke="#5b4527" stroke-width=".9" stroke-linecap="round" fill="none"/>
 </svg>`;
 
 export class Butterfly {

@@ -5,27 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Keyi's Garden</title>
 <meta name="description" content="A garden grown from 100 everyday observations: one flower, one frame, one day.">
-<link rel="stylesheet" href="style.css?v=202611180556">
+<link rel="stylesheet" href="style.css?v=202611181732">
 <script type="importmap">
 {
   "imports": {
     "three": "./vendor/three.module.js?v=187",
     "./vendor/three.core.js": "./vendor/three.core.js?v=187",
-    "./src/utils.js": "./src/utils.js?v=202611180556",
-    "./src/layout.js": "./src/layout.js?v=202611180556",
-    "./src/Terrain.js": "./src/Terrain.js?v=202611180556",
-    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611180556",
-    "./src/Flower.js": "./src/Flower.js?v=202611180556",
-    "./src/FlowerField.js": "./src/FlowerField.js?v=202611180556",
-    "./src/CameraController.js": "./src/CameraController.js?v=202611180556",
-    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611180556",
-    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611180556",
-    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611180556",
-    "./src/Pollen.js": "./src/Pollen.js?v=202611180556",
-    "./src/Visits.js": "./src/Visits.js?v=202611180556",
-    "./src/Butterfly.js": "./src/Butterfly.js?v=202611180556",
-    "./src/Intro.js": "./src/Intro.js?v=202611180556",
-    "./src/GardenScene.js": "./src/GardenScene.js?v=202611180556"
+    "./src/utils.js": "./src/utils.js?v=202611181732",
+    "./src/layout.js": "./src/layout.js?v=202611181732",
+    "./src/Terrain.js": "./src/Terrain.js?v=202611181732",
+    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611181732",
+    "./src/Flower.js": "./src/Flower.js?v=202611181732",
+    "./src/FlowerField.js": "./src/FlowerField.js?v=202611181732",
+    "./src/CameraController.js": "./src/CameraController.js?v=202611181732",
+    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611181732",
+    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611181732",
+    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611181732",
+    "./src/Pollen.js": "./src/Pollen.js?v=202611181732",
+    "./src/Visits.js": "./src/Visits.js?v=202611181732",
+    "./src/Butterfly.js": "./src/Butterfly.js?v=202611181732",
+    "./src/Intro.js": "./src/Intro.js?v=202611181732",
+    "./src/GardenScene.js": "./src/GardenScene.js?v=202611181732"
   }
 }
 </script>
@@ -43,6 +43,7 @@
 <div class="butterfly" id="butterfly" aria-hidden="true"></div>
 
 <p class="hint" id="hint">Scroll to walk deeper &middot; hover a flower &middot; click to enter a day</p>
+<p class="coach" id="coach" role="status" aria-live="polite"><span class="coach-glyph" aria-hidden="true"><i></i></span><span>To turn your view, click and drag left or right.</span></p>
 
 <nav class="views" id="views" aria-label="Camera view">
   <button data-view="walk" title="Walk through the garden (1)">Explore</button>
@@ -101,8 +102,8 @@
 
 <div class="nogl" id="nogl"><p></p></div>
 
-<script src="data.js?v=202611180556"></script>
-<script src="config.js?v=202611180556"></script>
-<script type="module" src="./src/main.js?v=202611180556"></script>
+<script src="data.js?v=202611181732"></script>
+<script src="config.js?v=202611181732"></script>
+<script type="module" src="./src/main.js?v=202611181732"></script>
 </body>
 </html>

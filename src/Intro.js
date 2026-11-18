@@ -7,7 +7,7 @@ export class Intro {
   constructor({ onEnter }) {
     this.root = document.querySelector("#intro"); this.btn = document.querySelector("#enter"); this.onEnter = onEnter; this.open = true;
     this.root.querySelectorAll(".intro-bf").forEach((el, i) => { el.innerHTML = butterflySvg("in" + i); });
-    const dust = this.root.querySelector(".intro-dust"), cols = ["#e4bd5a", "#c9b27a", "#9fb0d6", "#b9aee0"];
+    const dust = this.root.querySelector(".intro-dust"), cols = ["#e8c25e", "#d9b66a", "#c9b27a", "#a9bad6"];
     for (let i = 0; i < 34; i++) {
       const n = document.createElement("i"), s = 2 + hash(i, 3) * 3.4;
       n.style.cssText = `left:${(hash(i, 1) * 100).toFixed(1)}%;top:${(hash(i, 2) * 100).toFixed(1)}%;width:${s.toFixed(1)}px;height:${s.toFixed(1)}px;` +

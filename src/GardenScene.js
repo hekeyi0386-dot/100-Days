@@ -87,6 +87,7 @@ export class GardenScene {
       const f = this.pick(x, y);
       if (f && f.hasImage) this.openDay(f.day);
     };
+    this.controller.onSwipeHint = () => this.showCoach();
     this.controller.onActivity = () => { this.hintMoved++; if (this.hintMoved > 12) this.hint.classList.add("gone"); this.armIdle(); };
     this.overlay.onClose = () => this.closeDay();
     this.overlay.onPrev = () => this.step(-1);
@@ -119,6 +120,14 @@ export class GardenScene {
       return f;
     }
     return null;
+  }
+
+  /* a small, passing hint (not a tutorial): shown for a few seconds in the hint's place */
+  showCoach() {
+    if (this.current || this.intro.open || this.controller.view === "top") return;
+    const el = document.querySelector("#coach");
+    document.body.classList.add("coaching"); el.classList.add("show");
+    clearTimeout(this.coachTimer); this.coachTimer = setTimeout(() => { el.classList.remove("show"); document.body.classList.remove("coaching"); }, 5200);
   }
 
   /* ---------- camera views ---------- */
@@ -185,7 +194,7 @@ export class GardenScene {
     if (this.current || c.mode !== "free" || c.trans || !c.hasPointer || this.intro.open) { if (this.field.hovered) { this.field.setHover(null); this.hideTag(); } return; }
     const f = this.pickNDC(c.pointer);
     if (f && f.hasImage && f !== this.field.hovered) { const up = this.field.faceUp; this.pollen.burst(f.headPos, f.R * (1 + 0.45 * up), 9, 1 + 1.6 * up); }   // the butterfly arrives: a puff of pollen
-    this.field.setHover(f);
+    this.field.setHover(f, ...this.brushDirection());
     if (f) this.showTag(f); else this.hideTag();
     if (!this.butterfly.enabled) this.canvas.style.cursor = f && f.hasImage ? "pointer" : "";
   }
@@ -210,6 +219,15 @@ export class GardenScene {
   hideTag() { this.tag.classList.remove("show"); this.tag.dataset.day = ""; if (!this.butterfly.enabled) this.canvas.style.cursor = ""; }
 
   /* ---------- the butterfly, and the garden's memory ---------- */
+  // which way the butterfly has been moving, as a direction on the ground (used to push a flower the way it was brushed)
+  brushDirection() {
+    const c = this.controller, p = this._prevPtr || (this._prevPtr = c.pointer.clone());
+    const vx = c.pointer.x - p.x, vy = c.pointer.y - p.y; p.copy(c.pointer);
+    const m = this.camera.matrixWorld.elements;
+    const rx = m[0], rz = m[2], fl = Math.hypot(m[8], m[10]), fx = fl > 0.3 ? -m[8] / fl : m[4], fz = fl > 0.3 ? -m[10] / fl : m[6];   // camera right / "forward" along the ground
+    return [rx * vx + fx * vy, rz * vx + fz * vy];
+  }
+
   headScreen(f) {                                   // where a flower's head is on screen, and how big
     const v = f.headPos.clone().project(this.camera), dist = f.headPos.distanceTo(this.camera.position);
     const scale = 1 + 0.17 + this.field.faceUp * 0.45, r = (f.R * scale / dist) / Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * (innerHeight / 2);

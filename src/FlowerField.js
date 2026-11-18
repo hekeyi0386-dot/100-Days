@@ -16,10 +16,9 @@ function radialTexture(stops) {
 function ghostTexture() {
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d");
-  g.fillStyle = "rgba(250,248,242,.5)"; g.beginPath(); g.arc(128, 128, 118, 0, 7); g.fill();
-  g.strokeStyle = "rgba(143,152,132,.75)"; g.lineWidth = 4; g.beginPath(); g.arc(128, 128, 116, 0, 7); g.stroke();
-  g.strokeStyle = "rgba(143,152,132,.35)"; g.lineWidth = 2; g.beginPath(); g.arc(128, 128, 84, 0, 7); g.stroke();
-  g.fillStyle = "rgba(226,185,79,.85)"; g.beginPath(); g.arc(128, 128, 9, 0, 7); g.fill();
+  g.fillStyle = "rgba(250,248,242,.2)"; g.beginPath(); g.arc(128, 128, 118, 0, 7); g.fill();
+  g.strokeStyle = "rgba(140,150,128,.62)"; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 116, 0, 7); g.stroke();
+  g.fillStyle = "rgba(232,191,85,.8)"; g.beginPath(); g.arc(128, 128, 6, 0, 7); g.fill();
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
 }
 
@@ -64,7 +63,7 @@ export class FlowerField {
     const shadows = new THREE.InstancedMesh(shadowGeo, new THREE.MeshBasicMaterial({
       map: radialTexture([[0, "rgba(70,78,62,.30)"], [1, "rgba(70,78,62,0)"]]), transparent: true, depthWrite: false, color: 0xffffff,
     }), N);
-    shadows.frustumCulled = false;
+    shadows.frustumCulled = false; this.shadows = shadows;
 
     this.flowers = layout.map((l, i) => {
       const f = new Flower(l, byDay.get(l.day) || null, i, shared);
@@ -76,7 +75,7 @@ export class FlowerField {
     });
     this.byDay = new Map(this.flowers.map((f) => [f.day, f]));
     this.seedlings = this.makeSeedlings(mobile ? 110 : 260);
-    this.group.add(shadows, this.stems, this.leaves, this.seedlings, this.makeGroupLines(layout.groups));
+    this.group.add(shadows, this.stems, this.leaves, this.seedlings);
     this.targets = this.flowers.map((f) => f.hit);
     this.loader = new THREE.TextureLoader();
     this.loadTimer = 0; this.focused = null; this.hovered = null; this.wind = 0.6; this.faceUp = 0; this.topYaw = Math.PI / 2; this.topPitch = 1.31; this.loadAll = false;
@@ -106,36 +105,6 @@ export class FlowerField {
     const g = new THREE.Group(); g.add(stems, heads); return g;
   }
 
-  /* Faint threads joining the days of each constellation, seen only from above, like a star map drawn on the ground */
-  makeGroupLines(groups) {
-    const pts = [], at = (f) => [f.base.x, f.base.y + 0.18, f.base.z];
-    for (const g of groups) {
-      const fl = g.days.map((d) => this.byDay.get(d)).filter(Boolean);
-      if (fl.length < 2) continue;
-      if (g.type === "cluster") {                                  // each flower to its nearest older neighbour (a little tree)
-        for (let i = 1; i < fl.length; i++) {
-          let best = 0, bd = 1e9;
-          for (let j = 0; j < i; j++) { const d = fl[i].base.distanceToSquared(fl[j].base); if (d < bd) { bd = d; best = j; } }
-          pts.push(...at(fl[i]), ...at(fl[best]));
-        }
-      } else {
-        for (let i = 1; i < fl.length; i++) pts.push(...at(fl[i - 1]), ...at(fl[i]));
-        if (g.type === "ring") pts.push(...at(fl[fl.length - 1]), ...at(fl[0]));
-      }
-    }
-    // a short thread between the two nearest flowers of neighbouring constellations: the field reads as one long star chain
-    for (let i = 1; i < groups.length; i++) {
-      const A = groups[i - 1].days.map((d) => this.byDay.get(d)).filter(Boolean), B = groups[i].days.map((d) => this.byDay.get(d)).filter(Boolean);
-      let best = null, bd = 1e9;
-      for (const fa of A) for (const fb of B) { const d = fa.base.distanceToSquared(fb.base); if (d < bd) { bd = d; best = [fa, fb]; } }
-      if (best) pts.push(...at(best[0]), ...at(best[1]));
-    }
-    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    this.lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x8e9884, transparent: true, opacity: 0, depthWrite: false }));
-    this.lines.frustumCulled = false; this.lines.visible = false;
-    return this.lines;
-  }
-
   /* an awakened flower: its stem and leaves take on a fresh green */
   tintFlower(f, vf) {
     const c = this._c;
@@ -155,9 +124,17 @@ export class FlowerField {
   }
 
   /* hover: this flower wakes, its neighbours step back a little */
-  setHover(flower) {
+  setHover(flower, dirX = 0, dirZ = 0) {
     if (flower === this.hovered) return;
     this.hovered = flower; this.refreshStates();
+    if (!flower) return;
+    flower.nudge(0.7, dirX, dirZ);                                    // the butterfly brushes it ...
+    const reach = flower.R * 3.4;                                       // ... and the air it moves stirs its neighbours, just a little
+    for (const f of this.flowers) {
+      if (f === flower) continue;
+      const d = f.headPos.distanceTo(flower.headPos);
+      if (d < reach) f.nudge(0.2 * (1 - d / reach), dirX, dirZ);
+    }
   }
   setFocus(flower) { this.focused = flower; this.refreshStates(); }
   refreshStates() {
@@ -183,7 +160,9 @@ export class FlowerField {
     this.stems.instanceMatrix.needsUpdate = true; this.leaves.instanceMatrix.needsUpdate = true;
     if (this.tintDirty) { this.stems.instanceColor.needsUpdate = true; this.leaves.instanceColor.needsUpdate = true; this.tintDirty = false; }
     const up = this.faceUp;
-    this.lines.visible = up > 0.03; this.lines.material.opacity = 0.5 * up * up;
+    this.shadows.material.opacity = 1 - 0.8 * up;                       // from above a shadow only reads as a smudge
+    this.stems.material.opacity = 1 - 0.9 * up; this.stems.material.transparent = up > 0.02; this.stems.material.depthWrite = up < 0.5;
+    this.leaves.material.opacity = 1 - 0.85 * up; this.leaves.material.transparent = up > 0.02; this.leaves.material.depthWrite = up < 0.5;
     this.seedlings.visible = up < 0.98; this.seedHeads.material.opacity = 0.8 * (1 - up);
     if (this.hovered && this.hovered.hasImage && this.pollen) {             // a gentle trickle of pollen while the butterfly visits
       this.emitAcc += dt * 14; const h = this.hovered;
@@ -192,6 +171,6 @@ export class FlowerField {
     for (const f of this.flowers) if (f.visited && !f.colorState && f.textureState === 2) f.loadColor(this.loader, this.anisotropy);
     this.loadTimer -= dt;
     if (this.loadTimer <= 0) { this.loadTimer = 0.15; this.loadNearby(cam.position); }
-    this.shared.ghostMat.opacity = 1 - 0.5 * this.faceUp;                 // days still to come step back when seen from above
+    this.shared.ghostMat.opacity = 1 - 0.3 * this.faceUp;                 // days still to come step back when seen from above
   }
 }
