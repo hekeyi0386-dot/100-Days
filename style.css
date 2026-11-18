@@ -1,15 +1,13 @@
 /* Typography: two local fonts (fonts/), no external requests.
-   Bonbon = display (titles, signature, the way-in button).  Comic Neue = everything that is read or used.
+   Mystery Quest = display (titles, signature, the way-in button).  Comic Neue = everything that is read or used.
    Neither family has bold or italic, so synthesis is switched off rather than letting the browser fake them. */
-@font-face{font-family:"Bonbon";src:url("fonts/Bonbon-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
-/* fallback only until fonts/Bonbon-Regular.ttf is in place */
-@font-face{font-family:"Lavishly Yours";src:url("fonts/LavishlyYours-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Mystery Quest";src:url("fonts/MysteryQuest-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"Comic Neue";src:url("fonts/ComicNeue-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
 
 :root{
   --ink:#2b2f3c; --ink-soft:#6f7380; --ivory:#f6f2e8; --cream:#fbf9f3; --mist:#eee9de;
   --sage:#8fa086; --gold:#e2b94f;
-  --display:"Bonbon","Lavishly Yours","Snell Roundhand","Apple Chancery",cursive;
+  --display:"Mystery Quest","Snell Roundhand","Apple Chancery",cursive;
   --body:"Comic Neue","Comic Sans MS","Chalkboard SE",ui-rounded,system-ui,sans-serif;
 }
 *{box-sizing:border-box}
