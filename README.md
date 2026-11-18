@@ -14,7 +14,7 @@ You are a butterfly entering the garden. Every flower holds one day; where you l
   (a link to a single day, `#day-27`, skips it).
 - **You open on the bird's eye**: all 100 days at once, laid out as twelve small constellations (rings, crescents, spirals,
   sunflower-like clusters) along one winding path, joined by faint threads like a star map. Day 1 is on the left, day 100 on the right.
-- **A quieter way in: dust.** Under the button, a small, low-contrast line (*Prefer another way to explore?*) opens a sentence and a link,
+- **A quieter way in: dust.** Under the button, a small, low-contrast line (*Not comfortable with butterflies?*) opens a sentence and a link,
   *Explore as Dust*. The same garden and camera, with a different companion: a tiny soft warm-white speck with a barely-there trace, no wings,
   no landing, no pollen and no trembling (the flower still wakes, glows and turns to colour when you settle on it). The main button always means
   butterfly. The choice (`visitorMode`: `"butterfly"` or `"dust"`) is kept for the browser session in `sessionStorage`
@@ -23,8 +23,7 @@ You are a butterfly entering the garden. Every flower holds one day; where you l
   flower you hover; the flower answers with a ring of light and a little pollen.
 - **Click a flower to land on it.** The camera descends and the day opens in two halves: on the left the flower itself, its head turned into the
   full-colour photograph (solid, not translucent, drawn above everything else, with the flowers that stood in front of it faded away); on the right
-  the day's sketch as the panel's main picture, with the date, the note and previous / next. The flower stays awake in colour afterwards: it is remembered in `localStorage`
-  (`keyis-garden:visited:v1`), counted top right ("3 of 44 flowers awake"), and lit gold on the timeline. "reset" (hover the counter) lets the garden sleep again.
+  the day's sketch as the panel's main picture, with the date, the note and previous / next. The flower stays awake in colour for as long as you stay on the page, counted top right ("3 of 44 flowers awake") and lit gold on the timeline; **a refresh starts every flower as a black-and-white sketch again** (nothing is stored). "reset" (hover the counter) lets the garden sleep again.
   There is no pollen after a click; only hovering stirs a little.
 - **Bird's eye** *(the way in)* – high above, slightly tilted, the whole field at once; every picture face-up. Days still to come are pale hollow silhouettes.
   It is a real place to explore: **scroll / pinch** draws nearer or further (anchored to the pointer, bounded: never so near the composition
@@ -51,7 +50,7 @@ day, and "Back to the garden" returns you to the view you left. `Esc` steps back
 | `Intro.js` | the prelude page |
 | `Butterfly.js`, `Dust.js`, `Pollen.js` | the two possible visitors (butterfly cursor / speck of dust), and the pollen a butterfly stirs up |
 | `Visitor.js` | the chosen visitor mode, kept for the session |
-| `Visits.js` | which flowers have been awakened (localStorage) |
+| `Visits.js` | which flowers have been awakened during this visit (not remembered across a refresh) |
 | `layout.js` | where each day lives: twelve constellations (ring / arc / spiral / cluster) along a winding path, two clearings; terrain height |
 | `FlowerField.js` | maps the day data onto `Flower`s, instanced stems / leaves / shadows / seedlings, lazy texture loading |
 | `Flower.js` | one flower: stem, leaves, round picture head, hover animation |

@@ -4,7 +4,7 @@
  *   ├─ CameraController    bird's eye (default, zoom + pan) / overview / walk; click to land on a flower
  *   ├─ Butterfly | Dust    the visitor (a butterfly by default, or a speck of dust), and what it stirs up on the flowers it visits
  *   ├─ Pollen
- *   ├─ Visits              which flowers have been awakened into colour (kept in localStorage)
+ *   ├─ Visits              which flowers have been awakened into colour (this visit only: a refresh starts them all as sketches again)
  *   ├─ Terrain / Sky / Hills
  *   ├─ Atmosphere          light, fog, grass, motes
  *   ├─ FlowerField         100 × Flower
