@@ -7,7 +7,7 @@ import { clamp, damp, lerp } from "./utils.js";
 const UP = new THREE.Vector3(0, 1, 0), RIGHT = new THREE.Vector3(1, 0, 0);
 const _q = new THREE.Quaternion(), _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qs = new THREE.Quaternion();
 const _e = new THREE.Euler(), _v = new THREE.Vector3(), _m = new THREE.Matrix4(), _s = new THREE.Vector3(), _c = new THREE.Color();
-const PAPER = new THREE.Color(0xe6e2d5), PAPER_HOT = new THREE.Color(0xfffcf2), PAPER_WARM = new THREE.Color(0xf8efd8);
+const PAPER = new THREE.Color(0xf0ede2), PAPER_HOT = new THREE.Color(0xfffcf2), PAPER_WARM = new THREE.Color(0xf8efd8);
 const easeOut = (x) => 1 - Math.pow(1 - x, 3);
 
 /* A flower head is ONE draw: paper, the ink sketch and the colour photograph are blended inside a single fragment shader.
@@ -37,12 +37,12 @@ void main(){
   vec3 paper = mix(uPaper, uPaperWarm, uVisit * 0.8);
   paper = mix(paper, uPaperHot, uHot);
   vec4 ink = texture2D(uInk, vUv, -0.6);
-  vec3 sketch = mix(paper, ink.rgb, ink.a * uInkIn * (0.9 + 0.1 * uHot));
+  vec3 sketch = mix(paper, ink.rgb, ink.a * uInkIn);
   vec4 pic = texture2D(uColor, vUv, -0.4);
   float fe = clamp((1.0 - r) / 0.10, 0.0, 1.0); fe = fe * fe * (3.0 - 2.0 * fe);
   float rim = mix(smoothstep(0.0, 0.5, fe), 1.0, uOpen) * pic.a;        // the photograph is solid right out to a narrow, soft rim (and to the corners once it is a square)
   vec3 photo = mix(paper, pic.rgb * (1.0 + 0.04 * uHot), rim);
-  gl_FragColor = vec4(mix(sketch, photo, uVisit), disc * uOpacity * mix(0.94, 1.0, uVisit));
+  gl_FragColor = vec4(mix(sketch, photo, uVisit), disc * uOpacity * 1.0);
 #include <colorspace_fragment>
 #include <fog_fragment>
 }`;

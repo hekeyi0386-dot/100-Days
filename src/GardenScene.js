@@ -165,7 +165,7 @@ export class GardenScene {
   // up high the haze steps back, so the whole field stays crisp
   updateFog() {
     const v = this.controller.v, a = smoothstep(0, 1, Math.min(v, 1)), b = smoothstep(1, 2, v);
-    this.fog.near = lerp(lerp(30, 55, a), 170, b); this.fog.far = lerp(lerp(285, 340, a), 760, b);
+    this.fog.near = lerp(lerp(45, 130, a), 420, b); this.fog.far = lerp(lerp(390, 720, a), 1800, b);   // a light haze only on the far ground while walking; none to speak of from above
   }
 
   /* ---------- one day ---------- */

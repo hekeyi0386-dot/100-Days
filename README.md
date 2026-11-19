@@ -90,3 +90,7 @@ Small links bottom-right. **Home** brings the intro back (no reload; visited flo
 ## Detail view layout (current)
 
 `layoutDetail()` in `GardenScene.js` sizes one composed section: the colour square and the sketch tile are the same size and level (the camera aims so the square's centre lands on the tile's centre line), a 40 px gap apart, and the pair is centred on the screen. Home / Reset Garden sit in a small pill above the Explore / Overview / Bird's eye pill. Flower heads use a thin feathered edge (`flower_head` in `tools/build_garden.py`) so the bird's eye stays crisp.
+
+## Clarity (no fog)
+
+The grain/multiply overlay (`.veil`) is gone (only a faint edge vignette remains), fog barely touches the garden from above (`updateFog`), heads are fully opaque with full-strength ink, and the ground is lit brighter with a cleaner ivory. The UI pills are more opaque, and the intro's backdrop blur is lighter.

@@ -12,7 +12,7 @@ export function createTerrain({ mobile }) {
   geo.rotateX(-Math.PI / 2);
   geo.translate(0, 0, cz);
   const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3);
-  const ivory = new THREE.Color(0xf1efe8), sage = new THREE.Color(0xdbe2d4), warm = new THREE.Color(0xf9f7f1), c = new THREE.Color();
+  const ivory = new THREE.Color(0xf6f4ec), sage = new THREE.Color(0xd3dcc8), warm = new THREE.Color(0xfcfaf4), c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
     pos.setY(i, terrainHeight(x, z));

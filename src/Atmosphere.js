@@ -15,9 +15,9 @@ function grain() {
 export function createAtmosphere(scene, { mobile }) {
   scene.fog = new THREE.Fog(FOG_COLOR, 30, 285);
 
-  scene.add(new THREE.HemisphereLight(0xf7f8f6, 0xd3d9cf, 1.5));
-  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-  const sun = new THREE.DirectionalLight(0xfff8ee, 0.85);
+  scene.add(new THREE.HemisphereLight(0xfbfbf8, 0xe2e6da, 1.9));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+  const sun = new THREE.DirectionalLight(0xfff8ee, 1.05);
   sun.position.set(-40, 70, 30); scene.add(sun);
 
   /* ---- grass: one instanced mesh of thin blades ---- */
