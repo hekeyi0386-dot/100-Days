@@ -452,8 +452,22 @@ body.intro-open .hint,body.coaching .hint,body.focusing .hint{opacity:0;pointer-
 .intro-bf.main{width:clamp(56px,9vh,92px)}
 .intro-kicker{margin-top:clamp(2px,1vh,10px)}
 @media (max-height:820px){.intro-lede{margin-top:clamp(8px,2vh,22px)}.intro-guide{margin-top:clamp(12px,2.4vh,26px)}.intro-cta{margin-top:clamp(10px,2vh,18px)}}
-@media (max-height:700px){.intro-lede:nth-of-type(2){display:none}}
+@media (max-height:700px){.intro-lede+.intro-lede{display:none}}
 /* the closed explanation takes no room, so the visible composition is what gets centred; opened, it simply unfolds beneath the link */
 .alt-stack{position:relative;height:0;display:block}
 .alt-panel{position:absolute;top:6px;left:50%;width:min(25em,86vw);margin-left:calc(min(25em,86vw) / -2)}
 .alt-stack>*{grid-area:auto}
+
+/* opening "Not comfortable with butterflies?" makes room for its line instead of hanging below the screen: the page re-centres around it */
+.alt-stack{position:static;height:auto;display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s cubic-bezier(.2,.8,.2,1)}
+.intro-alt.open .alt-stack{grid-template-rows:1fr}
+.alt-panel{position:static;width:auto;max-width:25em;margin:0 auto;min-height:0;overflow:hidden;top:auto;left:auto}
+.alt-stack>.alt-panel{grid-area:1/1}
+.alt-panel p{padding-top:8px}
+.intro-alt.open .alt-go{margin-bottom:4px}
+@media (max-height:860px){
+  .intro-card:has(.intro-alt.open) .intro-lede+.intro-lede{display:none}
+  .intro-card:has(.intro-alt.open) .intro-guide{margin-top:12px}
+  .intro-card:has(.intro-alt.open) .intro-guide .ln{line-height:1.35}
+}
+@media (max-height:720px){.intro-card:has(.intro-alt.open) .intro-lede{display:none}.intro-card:has(.intro-alt.open) .intro-cta{margin-top:10px}}
