@@ -150,16 +150,18 @@ export class GardenScene {
   /* The instruction, in two equal parts: Mouse / Trackpad, and Keyboard, each describing exactly what happens in the active view.
    * (Overview moves like Explore: the same drag, scroll and keys.) */
   dirHtml(view, coarse = false) {
-    const grp = (name, body) => `<span class="grp"><em>${name}</em><span class="grp-t">${body}</span></span>`;
-    const sep = '<i class="dot">&middot;</i>', A = (k) => `<b>${k}</b>`;
-    if (view === "coarse-walk") return grp("Touch", "Swipe up/down to move front/back" + sep + "Tap a flower to wake it");
+    const ln = (...parts) => `<span class="ln">${parts.join(" ")}</span>`;                     // one sentence, one line
+    const grp = (name, ...lines) => `<span class="grp"><em>${name}</em><span class="grp-t">${lines.join("")}</span></span>`;
+    const A = (k) => `<b>${k}</b>`;
+    if (view === "coarse-walk") return grp("Touch", ln("Swipe up/down to move front/back"), ln("Tap a flower to wake it"));
     if (view === "top") return coarse
-      ? grp("Touch", "Drag to move around the garden" + sep + "Pinch to zoom" + sep + "Tap a flower to wake it")
-      : grp("Mouse / Trackpad", "Drag to move around the garden" + sep + "Scroll to zoom" + sep + "Click to wake the flowers") + grp("Keyboard", A("&uarr; &darr; &larr; &rarr;") + " move around the garden" + sep + "Scroll to zoom");
+      ? grp("Touch", ln("Drag to move around the garden"), ln("Pinch to zoom"), ln("Tap a flower to wake it"))
+      : grp("Mouse / Trackpad", ln("Drag to move around the garden"), ln("Scroll to zoom"), ln("Click to wake the flowers"))
+        + grp("Keyboard", ln(A("&uarr; &darr; &larr; &rarr;"), "move around the garden"), ln("Scroll to zoom"));
     return coarse
-      ? grp("Touch", "Drag left/right to turn" + sep + "Swipe up/down to move front/back" + sep + "Tap a flower to wake it")
-      : grp("Mouse / Trackpad", "Drag left/right to turn" + sep + "Drag up/down to raise or lower your view" + sep + "Scroll to move front/back" + sep + "Click to wake the flowers")
-        + grp("Keyboard", A("&uarr; &darr;") + " move front/back" + sep + A("&larr; &rarr;") + " turn left/right");
+      ? grp("Touch", ln("Drag left/right to turn"), ln("Swipe up/down to move front/back"), ln("Tap a flower to wake it"))
+      : grp("Mouse / Trackpad", ln("Drag left/right to turn"), ln("Drag up/down to raise or lower your view"), ln("Scroll to move front/back"), ln("Click to wake the flowers"))
+        + grp("Keyboard", ln(A("&uarr; &darr;"), "move front/back"), ln(A("&larr; &rarr;"), "turn left/right"));
   }
 
   /* the little arrow pad glows while its key is held (and for a beat on a drag or a wheel turn in that direction) */

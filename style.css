@@ -420,3 +420,40 @@ body.intro-open .hint,body.coaching .hint,body.focusing .hint{opacity:0;pointer-
 .hint{padding:14px 40px 14px 16px}
 .hint-x{position:absolute;top:7px;right:8px;width:26px;height:26px;font-size:22px}
 @media (max-width:760px){.hint{padding:12px 36px 12px 14px}}
+
+/* one sentence per line */
+.ln{display:block}
+.hint .ln{white-space:nowrap}
+.intro-guide .ln{white-space:nowrap}
+.intro-guide .g-desk{flex-direction:row;gap:46px;align-items:flex-start;justify-content:center}
+.intro-guide .grp{align-items:center}
+.intro-guide{max-width:min(46em,92vw)}
+.hint{max-width:min(560px,calc(100vw - 28px))}
+@media (max-width:760px){.hint .ln,.intro-guide .ln{white-space:normal}.intro-guide .g-desk{flex-direction:column;gap:10px}}
+
+/* the same glow-on-the-words hover for Home / Reset Garden, Explore as Dust and the dialog buttons */
+.exits button,.alt-go,.confirm-row button{transition:color .3s ease,transform .4s cubic-bezier(.2,.8,.2,1),text-shadow .4s ease,box-shadow .4s ease,background .4s ease}
+.exits button:hover,.exits button:focus-visible{color:#2b2410;transform:scale(1.07);
+  text-shadow:0 0 1px rgba(255,200,40,.95),0 0 6px rgba(255,214,60,.95),0 0 14px rgba(255,208,50,.8),0 0 28px rgba(255,200,40,.55)}
+.exits button.quiet:hover,.exits button.quiet:focus-visible{color:#5a3a12}
+.alt-go:hover,.alt-go:focus-visible{color:#2b2410;transform:scale(1.05);text-decoration-color:rgba(214,168,60,.8);
+  text-shadow:0 0 1px rgba(255,200,40,.9),0 0 6px rgba(255,214,60,.9),0 0 14px rgba(255,208,50,.75),0 0 26px rgba(255,200,40,.5)}
+.alt-go:hover::before,.alt-go:focus-visible::before{animation:dustDrift 1.8s ease-in-out infinite;background:radial-gradient(circle at 38% 34%,#fffbe0,#ffe27a 60%,#f3c24a);box-shadow:0 0 0 1px rgba(214,168,60,.4),0 0 14px 5px rgba(255,214,90,.85)}
+@keyframes dustDrift{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(2px,-3px) scale(1.12)}50%{transform:translate(-1px,-5px) scale(1)}75%{transform:translate(-3px,-2px) scale(1.12)}}
+.confirm-row button:hover,.confirm-row button:focus-visible{color:#2b2410;transform:scale(1.05);background:transparent;
+  text-shadow:0 0 1px rgba(255,200,40,.95),0 0 6px rgba(255,214,60,.9),0 0 14px rgba(255,208,50,.75),0 0 26px rgba(255,200,40,.5);box-shadow:none}
+.confirm-row .ok:hover{background:rgba(255,226,138,.28)}
+@media (prefers-reduced-motion:reduce){.alt-go:hover::before{animation:none}.exits button,.alt-go,.confirm-row button{transition:color .2s}.exits button:hover,.alt-go:hover,.confirm-row button:hover{transform:none}}
+
+/* the first page sits in the middle of the screen at any height (it scrolls rather than clipping on a very short window) */
+.intro{overflow-y:auto;align-items:flex-start}
+.intro-card{margin:auto;padding:clamp(8px,2vh,28px) 0}
+.intro h1{font-size:clamp(38px,min(6.2vw,9.2vh),72px)}
+.intro-bf.main{width:clamp(56px,9vh,92px)}
+.intro-kicker{margin-top:clamp(2px,1vh,10px)}
+@media (max-height:820px){.intro-lede{margin-top:clamp(8px,2vh,22px)}.intro-guide{margin-top:clamp(12px,2.4vh,26px)}.intro-cta{margin-top:clamp(10px,2vh,18px)}}
+@media (max-height:700px){.intro-lede:nth-of-type(2){display:none}}
+/* the closed explanation takes no room, so the visible composition is what gets centred; opened, it simply unfolds beneath the link */
+.alt-stack{position:relative;height:0;display:block}
+.alt-panel{position:absolute;top:6px;left:50%;width:min(25em,86vw);margin-left:calc(min(25em,86vw) / -2)}
+.alt-stack>*{grid-area:auto}
