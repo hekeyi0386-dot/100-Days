@@ -94,3 +94,7 @@ Small links bottom-right. **Home** brings the intro back (no reload; visited flo
 ## Clarity (no fog)
 
 The grain/multiply overlay (`.veil`) is gone (only a faint edge vignette remains), fog barely touches the garden from above (`updateFog`), heads are fully opaque with full-strength ink, and the ground is lit brighter with a cleaner ivory. The UI pills are more opaque, and the intro's backdrop blur is lighter.
+
+## Days 45–80 and dates
+
+Source files live in `S for Sketches；P for Photos/` (`45P.jpg`, `45S.png`, …; the number is the day). Photos are stored already rotated upright (no EXIF reliance). `python3 tools/build_garden.py "S for Sketches；P for Photos"` builds only what is missing. Day 1 is August 25, 2026 (`startDate` in `config.js`); every later day is the next calendar day.

@@ -21,7 +21,10 @@ PAT = re.compile(r"^(\d+)\s*([sp])\b.*\.(jpe?g|png|webp)$", re.I)
 def sketch_to_ink(im):
     """White paper -> transparent, black ink -> opaque (works for jpeg noise too).
     A small source is first enlarged (Lanczos) and only then thresholded, so its outlines stay smooth when it is shown large."""
-    L = ImageOps.exif_transpose(im).convert("L")
+    im = ImageOps.exif_transpose(im)
+    if im.mode in ("RGBA", "LA", "P"):                           # a PNG with transparency: lay it on white paper first, or "transparent" turns into black ink
+        im = im.convert("RGBA"); paper = Image.new("RGBA", im.size, (255, 255, 255, 255)); paper.alpha_composite(im); im = paper
+    L = im.convert("L")
     if max(L.size) > 900:
         L.thumbnail((900, 900), Image.LANCZOS)
     elif max(L.size) < 900:
