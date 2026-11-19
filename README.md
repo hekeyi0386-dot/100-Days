@@ -102,3 +102,7 @@ Source files live in `S for Sketches；P for Photos/` (`45P.jpg`, `45S.png`, …
 ## Leaving the page
 
 `guardLeaving()` (GardenScene.js) asks the browser to confirm a refresh / tab close / navigation away once a flower has been woken or the visitor is out in the garden (not on the untouched prelude). It is the browser's own prompt and changes no state. Awakened flowers are still in memory only, so continuing a reload puts them back to sleep. **Home** keeps them, **Reset Garden** (custom dialog) clears them.
+
+## Instruction pop-up
+
+The `#hint` element is a small warm pop-up (title + one line + ×). `showHint("guide")` runs shortly after entering the garden and on a view change; `showHint("idle")` runs after 10 s without interaction. It hides on dismiss, on interaction, or after a timeout, and never shows over the prelude or an opened day.

@@ -353,3 +353,26 @@ body.focusing .topright{opacity:0;pointer-events:none}
 .awake,.awake span{color:#a97b1e}
 .awake{font-size:14px;letter-spacing:.02em;text-shadow:0 0 12px rgba(255,214,112,.4)}
 @media (max-width:760px){.topright{grid-template-areas:"now" "exits" "awake";grid-template-columns:auto;row-gap:3px}.exits{font-size:12px}.exits button.quiet{font-size:11px}}
+
+/* ---------- the instruction as a small, soft pop-up ---------- */
+.hint{position:fixed;left:50%;top:clamp(74px,11vh,112px);bottom:auto;transform:translate(-50%,0);z-index:30;display:flex;align-items:center;gap:14px;max-width:min(560px,calc(100vw - 28px));
+  white-space:normal;text-align:left;padding:14px 12px 14px 18px;border-radius:22px;pointer-events:auto;opacity:1;color:#6d4a22;
+  background:linear-gradient(180deg,rgba(255,252,242,.97),rgba(252,246,228,.97));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 14px 40px rgba(110,90,40,.18),0 0 0 1px rgba(255,255,255,.85) inset,0 0 0 4px rgba(255,214,112,.22),0 0 30px rgba(255,214,112,.28);
+  text-shadow:none;font-size:clamp(15px,1.25vw,17px);line-height:1.45;letter-spacing:.012em;
+  transition:opacity .6s ease,transform .7s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.hint.gone{opacity:0;transform:translate(-50%,-12px);pointer-events:none;visibility:hidden;transition:opacity .5s ease,transform .5s ease,visibility 0s .5s}
+.hint:not(.gone){animation:hintIn .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes hintIn{from{opacity:0;transform:translate(-50%,-16px) scale(.97)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+.hint-dot{flex:none;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 38% 34%,#fff6c4,#ffd84a 60%,#f0b92c);box-shadow:0 0 0 4px rgba(255,214,112,.3),0 0 14px 3px rgba(255,208,70,.6);animation:hintPulse 2.6s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{box-shadow:0 0 0 4px rgba(255,214,112,.3),0 0 14px 3px rgba(255,208,70,.55)}50%{box-shadow:0 0 0 7px rgba(255,214,112,.16),0 0 20px 6px rgba(255,208,70,.75)}}
+.hint-body{display:flex;flex-direction:column;gap:2px}
+.hint-title{font-family:var(--display);font-weight:400;font-size:19px;line-height:1.1;color:#4a3716;letter-spacing:0}
+.hint-x{all:unset;cursor:pointer;flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:20px;line-height:1;color:#9a7a45;transition:color .25s,background .25s,text-shadow .25s}
+.hint-x:hover,.hint-x:focus-visible{color:#3d2a08;background:rgba(255,214,112,.3);text-shadow:0 0 10px rgba(255,208,70,.8)}
+body.intro-open .hint,body.coaching .hint,body.focusing .hint{opacity:0;pointer-events:none;visibility:hidden}
+@media (max-width:760px){.hint{top:auto;bottom:96px;max-width:calc(100vw - 24px);padding:12px 10px 12px 14px}}
+@media (prefers-reduced-motion:reduce){.hint,.hint:not(.gone){animation:none;transition:none}.hint-dot{animation:none}}
+.hint{max-width:min(660px,calc(100vw - 28px));text-wrap:wrap}
+.hint-body{flex:1}.hint-x{font-size:26px}
+.hint-body #hint-text{text-wrap:pretty}

@@ -58,7 +58,7 @@ export class GardenScene {
     this.overlay = new DayOverlay();
     this.timeline = new ProgressIndicator(this.total, this.filled, (d) => this.walkToDay(d));
     this.tag = document.querySelector("#tag");
-    if (matchMedia("(pointer:coarse)").matches) document.querySelector("#hint").textContent = "Swipe to walk deeper \u00b7 tap a flower to enter a day";
+    if (matchMedia("(pointer:coarse)").matches) document.querySelector("#hint-text").textContent = "Swipe to walk deeper \u00b7 tap a flower to enter a day";
     this.hint = document.querySelector("#hint");
     this.raycaster = new THREE.Raycaster();
     this.current = null; this.last = performance.now(); this.frames = 0; this.slow = 0; this.t = 0;
@@ -93,7 +93,8 @@ export class GardenScene {
       if (f && f.hasImage) this.openDay(f.day);
     };
     this.controller.onSwipeHint = () => this.showCoach();
-    this.controller.onActivity = () => { this.hintMoved++; if (this.hintMoved > 12) this.hint.classList.add("gone"); this.armIdle(); };
+    this.controller.onActivity = () => { this.hintMoved++; if (this.hintMoved > (this.hintKind === "idle" ? 3 : 12)) this.hint.classList.add("gone"); this.armIdle(); };
+    document.querySelector("#hint-x").addEventListener("click", () => this.hint.classList.add("gone"));
     this.overlay.onClose = () => this.closeDay();
     this.overlay.onPrev = () => this.step(-1);
     this.overlay.onNext = () => this.step(1);
@@ -109,7 +110,7 @@ export class GardenScene {
 
   armIdle() {
     clearTimeout(this.idleTimer);
-    this.idleTimer = setTimeout(() => { if (this.current) return this.armIdle(); this.hintMoved = 0; this.hint.classList.remove("gone"); }, 10000);
+    this.idleTimer = setTimeout(() => { if (this.current || this.intro.open) return this.armIdle(); this.hintMoved = 0; this.showHint("idle"); }, 10000);
   }
 
   pick(clientX, clientY) {
@@ -142,9 +143,8 @@ export class GardenScene {
     this.views.setActive(name);
     for (const n of ["walk", "overview", "top"]) document.body.classList.toggle("view-" + n, n === name);
     this.hintView = name; this.writeHint();
-    this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle();
-    clearTimeout(this.hintFade);
-    if (!initial) this.hintFade = setTimeout(() => this.hint.classList.add("gone"), 6500);
+    this.hintMoved = 0; this.armIdle();
+    if (!initial && !this.intro.open) { this.showHint("guide"); clearTimeout(this.hintFade); this.hintFade = setTimeout(() => this.hint.classList.add("gone"), 7000); }   // a new view: its own short instruction
   }
 
   // the hint speaks in the visitor's own terms (a butterfly flutters and lands; a speck of dust drifts and settles)
@@ -159,7 +159,7 @@ export class GardenScene {
       overview: coarse ? "Swipe to glide along the garden \u00b7 tap a flower to land" : "Scroll to glide along the garden \u00b7 click a flower to land",
       top: coarse ? "Drag to move left/right \u00b7 pinch to move front/back \u00b7 tap a flower to wake it" : "Drag to move left/right, scroll to move front/back, click to wake it.",
     };
-    this.hint.textContent = t[this.hintView || "top"];
+    document.querySelector("#hint-text").textContent = t[this.hintView || "top"];
   }
 
   // up high the haze steps back, so the whole field stays crisp
@@ -272,7 +272,15 @@ export class GardenScene {
     if (this.hintView) this.writeHint();
   }
 
-  enterGarden(mode = "butterfly") { this.entered = true; this.setVisitorMode(mode); this.controller.enter(); this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle(); }
+  enterGarden(mode = "butterfly") { this.entered = true; this.setVisitorMode(mode); this.controller.enter(); this.hintMoved = 0; setTimeout(() => { if (!this.current && !this.intro.open) this.showHint("guide"); }, 1400); this.armIdle(); }
+
+  /* the instruction as a small pop-up: "guide" when we arrive, "idle" as a gentle reminder after a quiet while */
+  showHint(kind) {
+    this.hintKind = kind; clearTimeout(this.hintFade);
+    document.querySelector("#hint-title").textContent = kind === "idle" ? "Still here? A gentle reminder" : "How to explore";
+    this.hint.classList.add("gone"); void this.hint.offsetWidth; this.hint.classList.remove("gone");
+    this.hintFade = setTimeout(() => this.hint.classList.add("gone"), kind === "idle" ? 14000 : 16000);
+  }
 
   updateAwake() {
     const n = [...this.visits.set].filter((d) => this.field.byDay.get(d) && this.field.byDay.get(d).hasImage).length;
