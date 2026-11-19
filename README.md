@@ -98,3 +98,7 @@ The grain/multiply overlay (`.veil`) is gone (only a faint edge vignette remains
 ## Days 45–80 and dates
 
 Source files live in `S for Sketches；P for Photos/` (`45P.jpg`, `45S.png`, …; the number is the day). Photos are stored already rotated upright (no EXIF reliance). `python3 tools/build_garden.py "S for Sketches；P for Photos"` builds only what is missing. Day 1 is August 25, 2026 (`startDate` in `config.js`); every later day is the next calendar day.
+
+## Leaving the page
+
+`guardLeaving()` (GardenScene.js) asks the browser to confirm a refresh / tab close / navigation away once a flower has been woken or the visitor is out in the garden (not on the untouched prelude). It is the browser's own prompt and changes no state. Awakened flowers are still in memory only, so continuing a reload puts them back to sleep. **Home** keeps them, **Reset Garden** (custom dialog) clears them.

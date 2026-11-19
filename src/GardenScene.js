@@ -69,7 +69,7 @@ export class GardenScene {
     this.setVisitorMode(this.visitorMode);                                    // the choice made earlier this session, else the butterfly
     this.intro = new Intro({ onEnter: (mode) => this.enterGarden(mode), startOpen: this.visitorMode === "dust" }); if (deepLink) this.intro.skip();
     this.visits.onChange = () => this.updateAwake();
-    this.bindExits();
+    this.bindExits(); this.guardLeaving();
     this.updateAwake();
 
     this.bind(); this.resize(); this.armIdle();
@@ -272,7 +272,7 @@ export class GardenScene {
     if (this.hintView) this.writeHint();
   }
 
-  enterGarden(mode = "butterfly") { this.setVisitorMode(mode); this.controller.enter(); this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle(); }
+  enterGarden(mode = "butterfly") { this.entered = true; this.setVisitorMode(mode); this.controller.enter(); this.hintMoved = 0; this.hint.classList.remove("gone"); this.armIdle(); }
 
   updateAwake() {
     const n = [...this.visits.set].filter((d) => this.field.byDay.get(d) && this.field.byDay.get(d).hasImage).length;
@@ -293,11 +293,24 @@ export class GardenScene {
   /* Reset Garden: every flower asleep again, as if nobody had ever been here, then the prelude */
   resetGarden() {
     if (this.current) { this.closeDay({ fromHistory: true }); history.replaceState(null, "", location.pathname + location.search); }
-    this.visits.clear(); this.field.sleepAll(); this.updateAwake();
+    this.visits.clear(); this.field.sleepAll(); this.updateAwake(); this.entered = false;
     this.field.setHover(null); this.hideTag(); this.pollen.clear();
     if (this.controller.view !== "top") this.setView("top");
     this.controller.resetTop();
     this.goHome();
+  }
+
+  /* A refresh, a closed tab or a link away would throw the awakened flowers back to sleep (they live in memory only),
+   * so once someone has woken a flower, or is out in the garden, the browser is asked to confirm before it leaves.
+   * Only the browser's own prompt can do this. It never changes any state: cancelling it leaves everything as it was.
+   * (Home and Reset Garden are in-page actions and do not go through here.) */
+  guardLeaving() {
+    this.entered = !this.intro.open;                                     // arriving by a link to one day already skips the prelude
+    addEventListener("beforeunload", (e) => {
+      const inGarden = this.entered && !this.intro.open;
+      if (this.visits.size === 0 && !inGarden) return;                  // the prelude, nothing explored yet: leave freely
+      e.preventDefault(); e.returnValue = "";                          // the browser shows its own wording
+    });
   }
 
   bindExits() {
