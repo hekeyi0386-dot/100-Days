@@ -93,8 +93,8 @@ export class GardenScene {
       if (f && f.hasImage) this.openDay(f.day);
     };
     this.controller.onSwipeHint = () => this.showCoach();
-    this.controller.onActivity = () => { this.hintMoved++; if (this.hintMoved > (this.hintKind === "idle" ? 3 : 12)) this.hint.classList.add("gone"); this.armIdle(); };
-    document.querySelector("#hint-x").addEventListener("click", () => this.hint.classList.add("gone"));
+    this.controller.onActivity = () => this.armIdle();                       // moving about never hides the instruction: it is closed by hand, or after 10 s
+    document.querySelector("#hint-x").addEventListener("click", () => this.hideHint());
     this.overlay.onClose = () => this.closeDay();
     this.overlay.onPrev = () => this.step(-1);
     this.overlay.onNext = () => this.step(1);
@@ -110,7 +110,7 @@ export class GardenScene {
 
   armIdle() {
     clearTimeout(this.idleTimer);
-    this.idleTimer = setTimeout(() => { if (this.current || this.intro.open) return this.armIdle(); this.hintMoved = 0; this.showHint("idle"); }, 10000);
+    this.idleTimer = setTimeout(() => { if (this.current || this.intro.open) return this.armIdle(); this.showHint("idle"); }, 10000);   // 10 s with no mouse, trackpad, scroll or key
   }
 
   pick(clientX, clientY) {
@@ -144,22 +144,22 @@ export class GardenScene {
     for (const n of ["walk", "overview", "top"]) document.body.classList.toggle("view-" + n, n === name);
     this.hintView = name; this.writeHint();
     this.hintMoved = 0; this.armIdle();
-    if (!initial && !this.intro.open) { this.showHint("guide"); clearTimeout(this.hintFade); this.hintFade = setTimeout(() => this.hint.classList.add("gone"), 7000); }   // a new view: its own short instruction
+    if (!initial && !this.intro.open) this.showHint("guide");                       // a new view: its own instruction
   }
 
-  /* The instruction, in two equal parts: Mouse / Trackpad, and Keyboard, each adapting to the active view. */
-  dirHtml(view, coarse = false, dust = false) {
+  /* The instruction, in two equal parts: Mouse / Trackpad, and Keyboard, each describing exactly what happens in the active view.
+   * (Overview moves like Explore: the same drag, scroll and keys.) */
+  dirHtml(view, coarse = false) {
     const grp = (name, body) => `<span class="grp"><em>${name}</em><span class="grp-t">${body}</span></span>`;
     const sep = '<i class="dot">&middot;</i>', A = (k) => `<b>${k}</b>`;
-    if (view === "coarse-walk") return grp("Touch", "Swipe to walk deeper" + sep + "Tap a flower to enter a day");
-    const verb = dust ? "settle" : "land";
-    if (coarse) return view === "top"
-      ? grp("Touch", "Drag to move left / right" + sep + "Pinch to zoom" + sep + "Tap a flower to wake it")
-      : grp("Touch", "Swipe to move along the garden" + sep + "Tap a flower to " + verb);
-    if (view === "top") return grp("Mouse / Trackpad", "Drag to pan" + sep + "Scroll to zoom" + sep + "Click to wake it")
-      + grp("Keyboard", A("&uarr; &darr; &larr; &rarr;") + " pan" + sep + "Scroll to zoom");
-    return grp("Mouse / Trackpad", "Drag to move left / right" + sep + "Scroll to move front / back" + sep + (dust ? "Click to settle" : "Click to wake it"))
-      + grp("Keyboard", A("&uarr; &darr;") + " move" + sep + A("&larr; &rarr;") + " turn");
+    if (view === "coarse-walk") return grp("Touch", "Swipe up/down to move front/back" + sep + "Tap a flower to wake it");
+    if (view === "top") return coarse
+      ? grp("Touch", "Drag to move around the garden" + sep + "Pinch to zoom" + sep + "Tap a flower to wake it")
+      : grp("Mouse / Trackpad", "Drag to move around the garden" + sep + "Scroll to zoom" + sep + "Click to wake the flowers") + grp("Keyboard", A("&uarr; &darr; &larr; &rarr;") + " move around the garden" + sep + "Scroll to zoom");
+    return coarse
+      ? grp("Touch", "Drag left/right to turn" + sep + "Swipe up/down to move front/back" + sep + "Tap a flower to wake it")
+      : grp("Mouse / Trackpad", "Drag left/right to turn" + sep + "Drag up/down to raise or lower your view" + sep + "Scroll to move front/back" + sep + "Click to wake the flowers")
+        + grp("Keyboard", A("&uarr; &darr;") + " move front/back" + sep + A("&larr; &rarr;") + " turn left/right");
   }
 
   /* the little arrow pad glows while its key is held (and for a beat on a drag or a wheel turn in that direction) */
@@ -190,7 +190,7 @@ export class GardenScene {
       overview: coarse ? "Swipe to glide along the garden \u00b7 tap a flower to land" : "Scroll to glide along the garden \u00b7 click a flower to land",
       top: coarse ? "Drag to move left/right \u00b7 pinch to move front/back \u00b7 tap a flower to wake it" : "Drag to move left/right, scroll to move front/back, click to wake it.",
     };
-    document.querySelector("#hint-text").innerHTML = this.dirHtml(this.hintView || "top", coarse, dust);
+    document.querySelector("#hint-text").innerHTML = this.dirHtml(this.hintView || "top", coarse);
   }
 
   // up high the haze steps back, so the whole field stays crisp
@@ -309,9 +309,10 @@ export class GardenScene {
   showHint(kind) {
     this.hintKind = kind; clearTimeout(this.hintFade);
     document.querySelector("#hint-title").textContent = kind === "idle" ? "Still here? A gentle reminder" : "How to explore";
-    this.hint.classList.add("gone"); void this.hint.offsetWidth; this.hint.classList.remove("gone");
-    this.hintFade = setTimeout(() => this.hint.classList.add("gone"), kind === "idle" ? 14000 : 16000);
+    if (this.hint.classList.contains("gone")) { void this.hint.offsetWidth; this.hint.classList.remove("gone"); }   // (already showing: just keep it, and restart its 10 s)
+    this.hintFade = setTimeout(() => this.hideHint(), 10000);
   }
+  hideHint() { clearTimeout(this.hintFade); this.hint.classList.add("gone"); }
 
   updateAwake() {
     const n = [...this.visits.set].filter((d) => this.field.byDay.get(d) && this.field.byDay.get(d).hasImage).length;

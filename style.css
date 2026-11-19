@@ -415,3 +415,8 @@ body.intro-open .hint,body.coaching .hint,body.focusing .hint{opacity:0;pointer-
 .intro-guide .g-touch{display:none}
 @media (pointer:coarse),(max-width:760px){.intro-guide .g-desk{display:none}.intro-guide .g-touch{display:flex}}
 .hint{max-width:min(720px,calc(100vw - 28px))}
+
+/* the close control sits in the top-right corner of the pop-up */
+.hint{padding:14px 40px 14px 16px}
+.hint-x{position:absolute;top:7px;right:8px;width:26px;height:26px;font-size:22px}
+@media (max-width:760px){.hint{padding:12px 36px 12px 14px}}
