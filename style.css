@@ -376,3 +376,42 @@ body.intro-open .hint,body.coaching .hint,body.focusing .hint{opacity:0;pointer-
 .hint{max-width:min(660px,calc(100vw - 28px));text-wrap:wrap}
 .hint-body{flex:1}.hint-x{font-size:26px}
 .hint-body #hint-text{text-wrap:pretty}
+
+/* ===== direction-test prototype: arrows as the language of movement ===== */
+.hint-dot{display:none}
+.dpad{flex:none;display:grid;grid-template-columns:repeat(3,26px);grid-template-rows:repeat(2,26px);gap:4px;margin-right:2px}
+.dpad i{display:grid;place-items:center;font-style:normal;font-size:15px;line-height:1;color:#8a6420;border-radius:8px;background:rgba(255,246,214,.9);
+  box-shadow:inset 0 0 0 1px rgba(214,168,60,.45),0 1px 0 rgba(255,255,255,.9);transition:background .25s,color .25s,box-shadow .25s,transform .25s;animation:dpadBreath 2.8s ease-in-out infinite}
+.dpad i[data-k=ArrowUp]{grid-column:2;grid-row:1}.dpad i[data-k=ArrowLeft]{grid-column:1;grid-row:2}.dpad i[data-k=ArrowDown]{grid-column:2;grid-row:2}.dpad i[data-k=ArrowRight]{grid-column:3;grid-row:2}
+.dpad i[data-k=ArrowLeft]{animation-delay:-.5s}.dpad i[data-k=ArrowDown]{animation-delay:-1s}.dpad i[data-k=ArrowRight]{animation-delay:-1.5s}
+@keyframes dpadBreath{0%,100%{box-shadow:inset 0 0 0 1px rgba(214,168,60,.45),0 1px 0 rgba(255,255,255,.9),0 0 0 0 rgba(255,208,70,0)}50%{box-shadow:inset 0 0 0 1px rgba(214,168,60,.6),0 1px 0 rgba(255,255,255,.9),0 0 12px 2px rgba(255,208,70,.5)}}
+.dpad i.on{color:#3d2a08;background:#ffe27a;transform:scale(1.12);animation:none;box-shadow:inset 0 0 0 1px rgba(214,168,60,.8),0 0 16px 4px rgba(255,208,70,.8)}
+.dir-lines{display:flex;flex-direction:column;gap:3px}
+.dir{display:flex;align-items:baseline;gap:9px}
+.dir b{font-weight:400;min-width:3.1em;color:#b98a22;letter-spacing:.08em;text-shadow:0 0 10px rgba(255,208,70,.55)}
+.dir:not(:has(b)){padding-left:calc(3.1em + 9px)}
+.hint{padding:12px 12px 12px 16px;gap:16px}
+.intro-guide.dir-lines{align-items:center;gap:0}
+.intro-guide .g-desk,.intro-guide .g-touch{display:flex;flex-direction:column;gap:5px;align-items:center}
+.intro-guide .dir{justify-content:center}
+.intro-guide .dir b{min-width:0;font-size:1.05em}
+.intro-guide .dir:not(:has(b)){padding-left:0}
+.intro-guide .g-touch{display:none}
+@media (pointer:coarse),(max-width:760px){.intro-guide .g-desk{display:none}.intro-guide .g-touch{display:flex}}
+@media (prefers-reduced-motion:reduce){.dpad i{animation:none}}
+
+/* two equal control methods */
+.dir-lines{display:block}
+.grp{display:flex;flex-direction:column;gap:1px;margin:0}
+.grp+.grp{margin-top:7px}
+.grp em{font-style:normal;font-family:var(--display);font-size:15px;letter-spacing:.02em;color:#b98a22;text-shadow:0 0 10px rgba(255,208,70,.45);line-height:1.1}
+.grp-t{display:block;color:#6d4a22}
+.grp-t b{font-weight:400;color:#b98a22;letter-spacing:.1em;text-shadow:0 0 10px rgba(255,208,70,.55)}
+.dot{font-style:normal;color:#c9a24c;margin:0 .45em}
+.intro-guide{max-width:34em}
+.intro-guide .g-desk,.intro-guide .g-touch{display:flex;flex-direction:column;gap:9px;align-items:center}
+.intro-guide .grp{align-items:center;margin:0}.intro-guide .grp+.grp{margin-top:0}
+.intro-guide .grp em{font-size:17px}
+.intro-guide .g-touch{display:none}
+@media (pointer:coarse),(max-width:760px){.intro-guide .g-desk{display:none}.intro-guide .g-touch{display:flex}}
+.hint{max-width:min(720px,calc(100vw - 28px))}

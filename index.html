@@ -7,29 +7,29 @@
 <meta name="description" content="A garden grown from 100 everyday observations: one flower, one frame, one day.">
 <link rel="preload" href="fonts/MysteryQuest-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="fonts/ComicNeue-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="style.css?v=202611190445">
+<link rel="stylesheet" href="style.css?v=202611190534">
 <script type="importmap">
 {
   "imports": {
     "three": "./vendor/three.module.js?v=187",
     "./vendor/three.core.js": "./vendor/three.core.js?v=187",
-    "./src/utils.js": "./src/utils.js?v=202611190445",
-    "./src/layout.js": "./src/layout.js?v=202611190445",
-    "./src/Terrain.js": "./src/Terrain.js?v=202611190445",
-    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611190445",
-    "./src/Flower.js": "./src/Flower.js?v=202611190445",
-    "./src/FlowerField.js": "./src/FlowerField.js?v=202611190445",
-    "./src/CameraController.js": "./src/CameraController.js?v=202611190445",
-    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611190445",
-    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611190445",
-    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611190445",
-    "./src/Pollen.js": "./src/Pollen.js?v=202611190445",
-    "./src/Visits.js": "./src/Visits.js?v=202611190445",
-    "./src/Butterfly.js": "./src/Butterfly.js?v=202611190445",
-    "./src/Intro.js": "./src/Intro.js?v=202611190445",
-    "./src/Dust.js": "./src/Dust.js?v=202611190445",
-    "./src/Visitor.js": "./src/Visitor.js?v=202611190445",
-    "./src/GardenScene.js": "./src/GardenScene.js?v=202611190445"
+    "./src/utils.js": "./src/utils.js?v=202611190534",
+    "./src/layout.js": "./src/layout.js?v=202611190534",
+    "./src/Terrain.js": "./src/Terrain.js?v=202611190534",
+    "./src/Atmosphere.js": "./src/Atmosphere.js?v=202611190534",
+    "./src/Flower.js": "./src/Flower.js?v=202611190534",
+    "./src/FlowerField.js": "./src/FlowerField.js?v=202611190534",
+    "./src/CameraController.js": "./src/CameraController.js?v=202611190534",
+    "./src/DayOverlay.js": "./src/DayOverlay.js?v=202611190534",
+    "./src/ProgressIndicator.js": "./src/ProgressIndicator.js?v=202611190534",
+    "./src/ViewSwitcher.js": "./src/ViewSwitcher.js?v=202611190534",
+    "./src/Pollen.js": "./src/Pollen.js?v=202611190534",
+    "./src/Visits.js": "./src/Visits.js?v=202611190534",
+    "./src/Butterfly.js": "./src/Butterfly.js?v=202611190534",
+    "./src/Intro.js": "./src/Intro.js?v=202611190534",
+    "./src/Dust.js": "./src/Dust.js?v=202611190534",
+    "./src/Visitor.js": "./src/Visitor.js?v=202611190534",
+    "./src/GardenScene.js": "./src/GardenScene.js?v=202611190534"
   }
 }
 </script>
@@ -62,8 +62,8 @@
 <div class="speck" id="speck" aria-hidden="true"></div>
 
 <div class="hint gone" id="hint" role="status" aria-live="polite">
-  <span class="hint-dot" aria-hidden="true"></span>
-  <div class="hint-body"><b class="hint-title" id="hint-title">How to explore</b><span id="hint-text">Drag to move left/right, scroll to move front/back, click to wake it.</span></div>
+  <span class="dpad" aria-hidden="true"><i data-k="ArrowUp">&uarr;</i><i data-k="ArrowLeft">&larr;</i><i data-k="ArrowDown">&darr;</i><i data-k="ArrowRight">&rarr;</i></span>
+  <div class="hint-body"><b class="hint-title" id="hint-title">How to explore</b><span id="hint-text" class="dir-lines"></span></div>
   <button type="button" class="hint-x" id="hint-x" aria-label="Dismiss">&times;</button>
 </div>
 <p class="coach" id="coach" role="status" aria-live="polite"><span class="coach-glyph" aria-hidden="true"><i></i></span><span>To turn your view, click and drag left or right.</span></p>
@@ -115,7 +115,7 @@
     <h1 id="intro-title">You are a butterfly,<br><em>entering my garden.</em></h1>
     <p class="intro-lede">Every flower holds one frame from one of my days.</p>
     <p class="intro-lede">Drift slowly. Rest on the ones that call to you,<br>and wherever you land, the garden wakes in colour.</p>
-    <p class="intro-guide"><span class="g-desk">Drag to move left/right, scroll to move front/back, click to wake it.</span><span class="g-touch">Drag to move left/right, pinch to move front/back, tap to wake it.</span></p>
+    <p class="intro-guide"><span class="g-desk"><span class="grp"><em>Mouse / Trackpad</em><span class="grp-t">Drag to pan<i class="dot">&middot;</i>Scroll to zoom<i class="dot">&middot;</i>Click to wake it</span></span><span class="grp"><em>Keyboard</em><span class="grp-t"><b>&uarr; &darr; &larr; &rarr;</b> pan<i class="dot">&middot;</i>Scroll to zoom</span></span></span><span class="g-touch"><span class="grp"><em>Touch</em><span class="grp-t">Drag to move left / right<i class="dot">&middot;</i>Pinch to zoom<i class="dot">&middot;</i>Tap to wake it</span></span></span></p>
     <button id="enter" class="intro-cta" type="button"><span>Fly into the Garden</span></button>
     <div class="intro-alt" id="intro-alt">
       <button type="button" class="alt-toggle" id="alt-toggle" aria-expanded="false" aria-controls="alt-panel">Not comfortable with butterflies?</button>
@@ -131,8 +131,8 @@
 
 <div class="nogl" id="nogl"><p></p></div>
 
-<script src="data.js?v=202611190445"></script>
-<script src="config.js?v=202611190445"></script>
-<script type="module" src="./src/main.js?v=202611190445"></script>
+<script src="data.js?v=202611190534"></script>
+<script src="config.js?v=202611190534"></script>
+<script type="module" src="./src/main.js?v=202611190534"></script>
 </body>
 </html>

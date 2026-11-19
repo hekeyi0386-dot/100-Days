@@ -106,3 +106,7 @@ Source files live in `S for Sketches；P for Photos/` (`45P.jpg`, `45S.png`, …
 ## Instruction pop-up
 
 The `#hint` element is a small warm pop-up (title + one line + ×). `showHint("guide")` runs shortly after entering the garden and on a view change; `showHint("idle")` runs after 10 s without interaction. It hides on dismiss, on interaction, or after a timeout, and never shows over the prelude or an opened day.
+
+## Two ways to move
+
+Mouse / Trackpad: drag, scroll, click. Keyboard: Explore ↑ forward · ↓ back · ← → turn (keys combine); Bird's eye ↑ ↓ ← → pan across the whole field, scroll to zoom. Keys are held state read once per frame with dt (`applyKeys` in CameraController.js). The pop-up and first page show both methods and follow the active view.

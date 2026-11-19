@@ -42,6 +42,9 @@ export class CameraController {
     this.A = makePose(); this.B = makePose(); this.C = makePose(); this.poseFov = 52;
     this._tp = makePose(); this._tc = new THREE.PerspectiveCamera(); this._ray = new THREE.Raycaster(); this._plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.5);
 
+    // held keys (state, not events): the loop reads these every frame
+    this.keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+    this.kv = { fwd: 0, turn: 0, px: 0, py: 0 }; this.keyPing = 0;
     this.onTap = null; this.onActivity = null; this.onViewChange = null; this.locked = false;
     // sideways swipes on the trackpad do not turn the view (that takes click-and-drag): notice when someone keeps trying
     this.swipe = { sum: 0, last: 0, ends: [] }; this.hintReadyAt = 0; this.hintCount = 0; this.learnedDrag = false; this.onSwipeHint = null;
@@ -110,8 +113,10 @@ export class CameraController {
   unitsPerPixel() { return (2 * this.fitDistance() * this.zoomS * Math.tan(rad((this.fovBase + FOV_OFFSET[2]) / 2))) / innerHeight; }
 
   clampPan() {
-    const b = this.bounds, f = clamp((1.5 - this.zoom) / 1.15, 0.12, 1) * 0.95;          // nearer = more room to roam
-    const lx = (this.portrait ? b.w : b.d) / 2 * f, ly = (this.portrait ? b.d : b.w) / 2 * f;
+    // the centre of the view may reach the edge of the real flower field (b comes from the flower positions) and a little beyond,
+    // at any zoom; only when drawn far back does the range tighten, so the field never drifts away altogether
+    const b = this.bounds, f = this.zoom <= 1 ? 1 : lerp(1, 0.4, clamp((this.zoom - 1) / (ZOOM_MAX - 1), 0, 1)), m = 5;
+    const lx = (this.portrait ? b.w : b.d) / 2 * f + m, ly = (this.portrait ? b.d : b.w) / 2 * f + m;
     this.pan.set(clamp(this.pan.x, -lx, lx), clamp(this.pan.y, -ly, ly));
   }
 
@@ -143,6 +148,7 @@ export class CameraController {
     const to = VIEWS.indexOf(name);
     if (to < 0 || this.mode !== "free") return false;
     if (name === this.view) { if (name === "top" && !this.trans && (this.zoom !== 1 || this.pan.lengthSq() > 0)) { this.resetTop(); return true; } return false; }   // "Bird's eye" again = see the whole field again
+    this.clearKeys();
     const dist = Math.abs(to - this.v);
     this.trans = { from: this.v, to, t: 0, dur: dist > 1.1 ? 2.4 : 1.7 };
     this.view = name; this.onViewChange && this.onViewChange(name);
@@ -177,20 +183,27 @@ export class CameraController {
       this.onActivity && this.onActivity();
     }, { passive: false });
 
+    // Arrow keys are HELD STATE (keydown sets, keyup clears); the movement itself happens in update(), once per frame, with dt.
+    const typing = (e) => /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "");
     addEventListener("keydown", (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || typing(e)) return;
+      if (e.key in this.keys) {
+        const live = this.mode === "free" && !this.locked;            // (while a view change is under way a held key is remembered, and takes effect once it lands)
+        if (live) e.preventDefault();                                  // keep the page from scrolling
+        this.keys[e.key] = live; return;                               // (key auto-repeat just sets it true again: harmless)
+      }
       if (this.busy) return;
       if (this.view === "top") {
-        const s = 8 * this.zoom, key = e.key;
-        if (key === "ArrowLeft") this.panBy(-s, 0); else if (key === "ArrowRight") this.panBy(s, 0);
-        else if (key === "ArrowUp") this.panBy(0, s); else if (key === "ArrowDown") this.panBy(0, -s);
-        else if (key === "+" || key === "=") this.zoomAt(0.82); else if (key === "-" || key === "_") this.zoomAt(1.22);
-        else return;
+        if (e.key === "+" || e.key === "=") this.zoomAt(0.82); else if (e.key === "-" || e.key === "_") this.zoomAt(1.22); else return;
         e.preventDefault(); this.onActivity && this.onActivity(); return;
       }
-      const step = { ArrowDown: 0.035, ArrowUp: -0.035, PageDown: 0.1, PageUp: -0.1, " ": 0.1 }[e.key];
+      const step = { PageDown: 0.1, PageUp: -0.1, " ": 0.1 }[e.key];
       if (step !== undefined) { e.preventDefault(); this.p = clamp(this.p + step, 0, 1); this.onActivity && this.onActivity(); }
       if (e.key === "Home") this.p = 0; if (e.key === "End") this.p = 1;
     });
+    addEventListener("keyup", (e) => { if (e.key in this.keys) this.keys[e.key] = false; });
+    addEventListener("blur", () => this.clearKeys());                   // a held key whose keyup we never see must not keep us moving
+    document.addEventListener("visibilitychange", () => { if (document.hidden) this.clearKeys(); });
 
     const pts = new Map(); let down = null, pinch = null;
     d.addEventListener("pointerdown", (e) => {
@@ -284,8 +297,31 @@ export class CameraController {
 
   startFlight(target, dur, arc, done) { this.flight = { t: 0, dur, arc, target, done, fromPos: this.pos.clone(), fromLook: this.look.clone() }; }
 
+  clearKeys() { for (const k in this.keys) this.keys[k] = false; }
+
+  /* Continuous keyboard movement, called once per frame with the frame's dt. Each axis has a velocity that eases toward the wanted
+   * value (so it speeds up and settles smoothly), and the keys combine freely: forward + turning, or pan up + left, at once. */
+  applyKeys(dt) {
+    const K = this.keys, kv = this.kv, can = this.mode === "free" && !this.trans && !this.locked;
+    const ax = can ? (K.ArrowRight ? 1 : 0) - (K.ArrowLeft ? 1 : 0) : 0, ay = can ? (K.ArrowUp ? 1 : 0) - (K.ArrowDown ? 1 : 0) : 0;
+    if (this.view === "top") {
+      kv.px = damp(kv.px, ax, 7, dt); kv.py = damp(kv.py, ay, 7, dt); kv.fwd = damp(kv.fwd, 0, 7, dt); kv.turn = damp(kv.turn, 0, 7, dt);
+      if (Math.abs(kv.px) > 0.002 || Math.abs(kv.py) > 0.002) {
+        const speed = 650 * this.unitsPerPixel();                     // ~650 px of screen per second at full tilt, at any zoom
+        this.pan.x += kv.px * speed * dt; this.pan.y += kv.py * speed * dt; this.clampPan();
+      }
+    } else {
+      kv.fwd = damp(kv.fwd, ay, 5, dt); kv.turn = damp(kv.turn, -ax, 5, dt); kv.px = damp(kv.px, 0, 7, dt); kv.py = damp(kv.py, 0, 7, dt);
+      if (Math.abs(kv.fwd) > 0.002) this.p = clamp(this.p + kv.fwd * 0.05 * dt, 0, 1);          // Up = forward (deeper into the garden), Down = back
+      if (Math.abs(kv.turn) > 0.002) this.yaw = clamp(this.yaw + kv.turn * 0.95 * dt, -1.25, 1.25);   // Left turns the view left, Right turns it right
+    }
+    const moving = Math.abs(kv.px) + Math.abs(kv.py) + Math.abs(kv.fwd) + Math.abs(kv.turn) > 0.05;
+    if (moving && this.onActivity && (this.keyPing -= dt) <= 0) { this.keyPing = 0.3; this.onActivity(); }
+  }
+
   /* ---------- per frame ---------- */
   update(dt) {
+    this.applyKeys(dt);
     this.mxS = damp(this.mxS, this.mx, 2.6, dt); this.myS = damp(this.myS, this.my, 2.6, dt);
     if (this.mode === "free") {
       this.ps = damp(this.ps, this.p, 2.4, dt); this.yawS = damp(this.yawS, this.yaw, 5, dt); this.liftS = damp(this.liftS, this.lift, 3, dt);

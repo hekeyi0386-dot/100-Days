@@ -58,7 +58,7 @@ export class GardenScene {
     this.overlay = new DayOverlay();
     this.timeline = new ProgressIndicator(this.total, this.filled, (d) => this.walkToDay(d));
     this.tag = document.querySelector("#tag");
-    if (matchMedia("(pointer:coarse)").matches) document.querySelector("#hint-text").textContent = "Swipe to walk deeper \u00b7 tap a flower to enter a day";
+    if (matchMedia("(pointer:coarse)").matches) document.querySelector("#hint-text").innerHTML = this.dirHtml("coarse-walk");
     this.hint = document.querySelector("#hint");
     this.raycaster = new THREE.Raycaster();
     this.current = null; this.last = performance.now(); this.frames = 0; this.slow = 0; this.t = 0;
@@ -69,7 +69,7 @@ export class GardenScene {
     this.setVisitorMode(this.visitorMode);                                    // the choice made earlier this session, else the butterfly
     this.intro = new Intro({ onEnter: (mode) => this.enterGarden(mode), startOpen: this.visitorMode === "dust" }); if (deepLink) this.intro.skip();
     this.visits.onChange = () => this.updateAwake();
-    this.bindExits(); this.guardLeaving();
+    this.bindExits(); this.guardLeaving(); this.bindArrows();
     this.updateAwake();
 
     this.bind(); this.resize(); this.armIdle();
@@ -147,6 +147,37 @@ export class GardenScene {
     if (!initial && !this.intro.open) { this.showHint("guide"); clearTimeout(this.hintFade); this.hintFade = setTimeout(() => this.hint.classList.add("gone"), 7000); }   // a new view: its own short instruction
   }
 
+  /* The instruction, in two equal parts: Mouse / Trackpad, and Keyboard, each adapting to the active view. */
+  dirHtml(view, coarse = false, dust = false) {
+    const grp = (name, body) => `<span class="grp"><em>${name}</em><span class="grp-t">${body}</span></span>`;
+    const sep = '<i class="dot">&middot;</i>', A = (k) => `<b>${k}</b>`;
+    if (view === "coarse-walk") return grp("Touch", "Swipe to walk deeper" + sep + "Tap a flower to enter a day");
+    const verb = dust ? "settle" : "land";
+    if (coarse) return view === "top"
+      ? grp("Touch", "Drag to move left / right" + sep + "Pinch to zoom" + sep + "Tap a flower to wake it")
+      : grp("Touch", "Swipe to move along the garden" + sep + "Tap a flower to " + verb);
+    if (view === "top") return grp("Mouse / Trackpad", "Drag to pan" + sep + "Scroll to zoom" + sep + "Click to wake it")
+      + grp("Keyboard", A("&uarr; &darr; &larr; &rarr;") + " pan" + sep + "Scroll to zoom");
+    return grp("Mouse / Trackpad", "Drag to move left / right" + sep + "Scroll to move front / back" + sep + (dust ? "Click to settle" : "Click to wake it"))
+      + grp("Keyboard", A("&uarr; &darr;") + " move" + sep + A("&larr; &rarr;") + " turn");
+  }
+
+  /* the little arrow pad glows while its key is held (and for a beat on a drag or a wheel turn in that direction) */
+  bindArrows() {
+    const pad = document.querySelector("#hint .dpad"), keys = {};
+    pad.querySelectorAll("i").forEach((i) => { keys[i.dataset.k] = i; });
+    const set = (k, on) => { const el = keys[k]; if (el) el.classList.toggle("on", on); };
+    const blip = (k) => { const el = keys[k]; if (!el) return; el.classList.add("on"); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("on"), 260); };
+    addEventListener("keydown", (e) => { if (e.key in keys) set(e.key, true); });
+    addEventListener("keyup", (e) => { if (e.key in keys) set(e.key, false); });
+    addEventListener("blur", () => Object.keys(keys).forEach((k) => set(k, false)));
+    addEventListener("wheel", (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) blip(e.deltaY > 0 ? "ArrowDown" : "ArrowUp"); else blip(e.deltaX > 0 ? "ArrowRight" : "ArrowLeft"); }, { passive: true });
+    addEventListener("pointermove", (e) => {
+      if (e.buttons !== 1 || (Math.abs(e.movementX) < 2 && Math.abs(e.movementY) < 2)) return;
+      if (Math.abs(e.movementX) >= Math.abs(e.movementY)) blip(e.movementX > 0 ? "ArrowRight" : "ArrowLeft"); else blip(e.movementY > 0 ? "ArrowDown" : "ArrowUp");
+    });
+  }
+
   // the hint speaks in the visitor's own terms (a butterfly flutters and lands; a speck of dust drifts and settles)
   writeHint() {
     const coarse = matchMedia("(pointer:coarse)").matches, dust = this.visitorMode === "dust";
@@ -159,7 +190,7 @@ export class GardenScene {
       overview: coarse ? "Swipe to glide along the garden \u00b7 tap a flower to land" : "Scroll to glide along the garden \u00b7 click a flower to land",
       top: coarse ? "Drag to move left/right \u00b7 pinch to move front/back \u00b7 tap a flower to wake it" : "Drag to move left/right, scroll to move front/back, click to wake it.",
     };
-    document.querySelector("#hint-text").textContent = t[this.hintView || "top"];
+    document.querySelector("#hint-text").innerHTML = this.dirHtml(this.hintView || "top", coarse, dust);
   }
 
   // up high the haze steps back, so the whole field stays crisp
